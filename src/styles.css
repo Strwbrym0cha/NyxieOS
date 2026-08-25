@@ -9,3 +9,5 @@
 
 
 :root{--pink-deep:#c83b87;--pink-soft:#fff0f8}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--nyxie-pink)}.money-hero,.hero-money,.con-hero{background:linear-gradient(145deg,var(--nyxie-pink),var(--pink-deep));box-shadow:0 16px 35px #f45bb240}.money-home{background:linear-gradient(145deg,#e94ca2,var(--pink-deep))}.bottom-nav button.active{color:var(--pink-deep);background:linear-gradient(145deg,var(--nyxie-blush),var(--pink-soft))}.segmented button.selected{color:var(--pink-deep);box-shadow:0 4px 12px #f45bb230}.secondary,.tiny-action,.edit-action{background:#fff0f8;color:var(--pink-deep);border:1px solid #f4b8d9}.progress i{background:linear-gradient(90deg,var(--nyxie-pink),#e5469d)}.flight-card{border-color:var(--nyxie-pink)}.work-chip{background:#f8c6df;color:var(--pink-deep)}.content-chip{background:#ffe4f1;color:var(--pink-deep)}
+
+.cloud-sync-status{display:block;margin-top:8px;color:var(--pink-deep);font:600 1.15rem Fredoka}.cloud-sync-status+ p{margin-top:8px}.log-form button[disabled]{opacity:.65;cursor:wait}
