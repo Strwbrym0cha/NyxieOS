@@ -2,7 +2,7 @@ import {formatDate,daysUntil,getPlannerContext} from './yuu-context.js';
 import {toMoneyNumber} from './money-derived.js';
 
 const pick=(items,seed=0)=>items[Math.abs(seed)%items.length];
-const money=value=>'
+const money=value=>String.fromCharCode(36)+toMoneyNumber(value).toFixed(2);
 const plural=(count,word)=>count+' '+word+(count===1?'':'s');
 const toneOf=settings=>settings?.nagLevel||'Normal';
 
