@@ -5,7 +5,7 @@ import {getPlannerContext,localDate,shiftDate} from './yuu-context.js';
 
 const HISTORY_LIMIT=50;
 const QUICK_PROMPTS=['Today','Coming Up','Money','Cosplay','Content','Convention','Travel','Low Energy'];
-const promptText={Today:'What do I need to do today?',Coming Up:"What's coming up?",Money:"How's my money?",Cosplay:'What cosplay needs attention?',Content:'What content is due?',Convention:"How's convention prep?",Travel:"What's my travel plan?",'Low Energy':"I'm low energy"};
+const promptText={Today:'What do I need to do today?','Coming Up':"What's coming up?",Money:"How's my money?",Cosplay:'What cosplay needs attention?',Content:'What content is due?',Convention:"How's convention prep?",Travel:"What's my travel plan?",'Low Energy':"I'm low energy"};
 const trimHistory=history=>(history||[]).slice(-HISTORY_LIMIT);
 const message=(role,text,state='normal')=>({id:Date.now()+Math.random(),role,text,state,createdAt:new Date().toISOString()});
 const titleMatch=(title,query)=>{const a=normalizeInput(title),b=normalizeInput(query);return a===b||a.includes(b)||b.includes(a)};
