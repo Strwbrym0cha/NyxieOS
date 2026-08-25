@@ -31,7 +31,7 @@ export function generateReply(intent,data,settings={},options={}){
    if(c.nearestConvention)parts.push(c.nearestConvention.name+' in '+(daysUntil(c.nearestConvention.startDate)??0)+' days');
    if(c.nextTrip)parts.push((c.nextTrip.destination||c.nextTrip.name||'Your next trip')+(c.nextTrip.startDate?' on '+formatDate(c.nextTrip.startDate):''));
    if(c.nextUpload)parts.push('content upload '+formatDate(c.nextUpload.uploadDeadline));
-   if(c.upcomingMoney[0])parts.push(c.upcomingMoney[0].title+' due '+formatDate(c.upcomingMoney[0].due));
+   if(c.money.upcomingMoney[0])parts.push(c.money.upcomingMoney[0].title+' due '+formatDate(c.money.upcomingMoney[0].due));
    return {text:parts.length?(tone==='Gentle'?'Here is what is coming up: ':tone==='Bratty'?'Yare yare. The future is busy: ':'Coming up: ')+parts.slice(0,more?5:3).join(' · '):'Nothing urgent is coming up yet. Your future is suspiciously peaceful.',state:'normal'};
   }
   case 'money_status':{
