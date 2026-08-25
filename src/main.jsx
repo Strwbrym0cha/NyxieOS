@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import './styles.css';
 import Travel from './Travel.jsx';
@@ -11,6 +11,7 @@ import CosplayCrud from './CosplayCrud.jsx';
 import ConventionCrud from './ConventionCrud.jsx';
 import TravelCrud from './TravelCrud.jsx';
 import HomeCommand from './HomeCommand.jsx';
+import {supabase} from './supabase.js';
 
 const pad=n=>String(n).padStart(2,'0');
 const localDate=(d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -25,8 +26,149 @@ const getCosplayProgress=p=>p?.pieces?.length?Math.round(p.pieces.filter(x=>x.st
 const getNextCosplayPiece=p=>(p?.pieces||[]).filter(x=>x.status!=='Ready').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'))[0]||null;
 const getNearestConvention=(items=[])=>items.filter(x=>x.startDate&&x.startDate>=localDate()&&x.status!=='Completed').sort((a,b)=>a.startDate.localeCompare(b.startDate))[0]||null;
 const countdown=c=>{if(!c?.startDate)return '';const d=Math.ceil((new Date(c.startDate+'T12:00:00')-new Date(localDate()+'T12:00:00'))/86400000);return d<=0?'Today':d+' days'};
-function useStore(){const [data,setData]=useState(()=>{try{return mergeData(JSON.parse(localStorage.getItem('nyxie-data')))}catch{return defaults}});useEffect(()=>localStorage.setItem('nyxie-data',JSON.stringify(data)),[data]);return [data,setData]}
-const nav=[['home','⌂','Home'],['plan','✦','Plan'],['money','♡','Money'],['cosplay','✿','Cosplay'],['more','⋯','More']];
+function useStore(){
+ const [data,setData]=useState(()=>{try{return mergeData(JSON.parse(localStorage.getItem('nyxie-data')))}catch{return mergeData(null)}});
+ const [session,setSession]=useState(null);
+ const [cloudStatus,setCloudStatus]=useState('Local only');
+ const [cloudNotice,setCloudNotice]=useState('');
+ const dataRef=useRef(data);
+ const sessionRef=useRef(null);
+ const bootstrapDoneRef=useRef(false);
+ const bootstrapInFlightRef=useRef(false);
+ const bootstrapUserRef=useRef(null);
+ const lastSyncedRef=useRef('');
+ const revisionRef=useRef(null);
+ const saveTimerRef=useRef(null);
+ const saveVersionRef=useRef(0);
+
+ useEffect(()=>{dataRef.current=data;localStorage.setItem('nyxie-data',JSON.stringify(data))},[data]);
+
+ useEffect(()=>{
+   let disposed=false;
+   const clearSaveTimer=()=>{if(saveTimerRef.current){clearTimeout(saveTimerRef.current);saveTimerRef.current=null}};
+   const syncSession=async(nextSession)=>{
+     if(disposed)return;
+     const user=nextSession?.user||null;
+     const userId=user?.id||null;
+     const currentId=sessionRef.current?.user?.id||null;
+     if(userId&&userId===currentId&&(bootstrapInFlightRef.current||bootstrapDoneRef.current))return;
+     clearSaveTimer();
+     saveVersionRef.current+=1;
+     sessionRef.current=nextSession||null;
+     setSession(nextSession||null);
+     bootstrapUserRef.current=userId;
+     bootstrapDoneRef.current=false;
+     bootstrapInFlightRef.current=false;
+     lastSyncedRef.current='';
+     setCloudNotice('');
+     if(!userId){
+       setCloudStatus('Local only');
+       return;
+     }
+     bootstrapInFlightRef.current=true;
+     setCloudStatus('Loading cloud data');
+     const localData=mergeData(dataRef.current);
+     try{
+       const result=await supabase.from('nyxie_planner_data').select('data,revision').eq('user_id',userId).maybeSingle();
+       if(sessionRef.current?.user?.id!==userId)return;
+       if(result.error)throw result.error;
+       if(result.data?.data){
+         const normalized=mergeData(result.data.data);
+         lastSyncedRef.current=JSON.stringify(normalized);
+         revisionRef.current=result.data.revision??null;
+         setData(normalized);
+       }else{
+         const initial=mergeData(localData);
+         const inserted=await supabase.from('nyxie_planner_data').upsert({user_id:userId,data:initial},{onConflict:'user_id'}).select('revision').single();
+         if(sessionRef.current?.user?.id!==userId)return;
+         if(inserted.error)throw inserted.error;
+         lastSyncedRef.current=JSON.stringify(initial);
+         revisionRef.current=inserted.data?.revision??null;
+       }
+       bootstrapDoneRef.current=true;
+       setCloudStatus('Saved to cloud');
+     }catch(error){
+       if(sessionRef.current?.user?.id===userId){
+         console.error('NyxieOS cloud bootstrap failed',error);
+         setCloudStatus('Save error / Offline');
+         setCloudNotice('Couldn’t reach cloud storage. Your device copy is still safe.');
+       }
+     }finally{
+       if(sessionRef.current?.user?.id===userId)bootstrapInFlightRef.current=false;
+     }
+   };
+   supabase.auth.getSession().then(({data:result,error})=>{
+     if(error)throw error;
+     return syncSession(result.session);
+   }).catch(error=>{
+     if(!disposed){
+       console.error('NyxieOS auth session check failed',error);
+       setCloudStatus('Local only');
+     }
+   });
+   const {data:authData}=supabase.auth.onAuthStateChange((event,nextSession)=>{
+     if(event==='INITIAL_SESSION'||event==='SIGNED_IN'||event==='SIGNED_OUT')syncSession(nextSession);
+   });
+   return()=>{disposed=true;clearSaveTimer();saveVersionRef.current+=1;authData.subscription.unsubscribe()};
+ },[]);
+
+ useEffect(()=>{
+   if(!session?.user?.id||!bootstrapDoneRef.current)return;
+   const serialized=JSON.stringify(data);
+   if(serialized===lastSyncedRef.current)return;
+   if(saveTimerRef.current)clearTimeout(saveTimerRef.current);
+   const version=++saveVersionRef.current;
+   setCloudStatus('Syncing…');
+   setCloudNotice('');
+   saveTimerRef.current=setTimeout(async()=>{
+     const userId=session.user.id;
+     const result=await supabase.from('nyxie_planner_data').update({data}).eq('user_id',userId).select('revision').maybeSingle();
+     if(result.error){
+       if(version===saveVersionRef.current&&sessionRef.current?.user?.id===userId){
+         console.error('NyxieOS cloud save failed',result.error);
+         setCloudStatus('Save error / Offline');
+         setCloudNotice('Couldn’t reach cloud storage. Your device copy is still safe.');
+       }
+       return;
+     }
+     if(version!==saveVersionRef.current||sessionRef.current?.user?.id!==userId)return;
+     lastSyncedRef.current=serialized;
+     revisionRef.current=result.data?.revision??revisionRef.current;
+     setCloudStatus('Saved to cloud');
+   },700);
+   return()=>{if(saveTimerRef.current)clearTimeout(saveTimerRef.current)};
+ },[data,session]);
+
+ const sendMagicLink=async(email)=>{
+   const clean=String(email||'').trim();
+   if(!clean){setCloudNotice('Enter your email to continue.');return false}
+   setCloudStatus('Sending magic link…');
+   setCloudNotice('');
+   try{
+     const redirect=window.location.origin+window.location.pathname;
+     const result=await supabase.auth.signInWithOtp({email:clean,options:{emailRedirectTo:redirect}});
+     if(result.error)throw result.error;
+     setCloudStatus('Check your email ✉️');
+     setCloudNotice('Check your email ✉️');
+     return true;
+   }catch(error){
+     console.error('NyxieOS magic link failed',error);
+     setCloudStatus(sessionRef.current?'Saved to cloud':'Local only');
+     setCloudNotice('Magic link couldn’t be sent. Try again.');
+     return false;
+   }
+ };
+ const signOut=async()=>{
+   const result=await supabase.auth.signOut();
+   if(result.error){
+     console.error('NyxieOS sign out failed',result.error);
+     setCloudStatus('Save error / Offline');
+     setCloudNotice('Couldn’t sign out cleanly. Try again.');
+   }
+ };
+ const cloud=useMemo(()=>({status:cloudStatus,notice:cloudNotice,email:session?.user?.email||'',session,sendMagicLink,signOut}),[cloudStatus,cloudNotice,session]);
+ return [data,setData,cloud];
+}const nav=[['home','⌂','Home'],['plan','✦','Plan'],['money','♡','Money'],['cosplay','✿','Cosplay'],['more','⋯','More']];
 function MagicCard({children,className='',onClick}){return <section className={'card '+className} onClick={onClick}>{children}</section>}
 function SectionHeader({title,action}){return <div className="section-head"><h2>{title}</h2>{action&&<span>{action}</span>}</div>}
 function ProgressSpell({value,label}){return <div className="progress-wrap"><div className="progress-label"><span>{label}</span><strong>{Math.round(value)}%</strong></div><div className="progress"><i style={{width:`${Math.min(100,Math.max(0,value))}%`}}/></div></div>}
@@ -43,7 +185,7 @@ function Cosplay({data}){return <><header><div><small>Make magic piece by piece<
 function More(){return <><header><div><small>Your wider world</small><h1>More</h1></div></header><p className="muted">Future modules, ready when you are.</p><div className="placeholder-grid">{['Conventions','Travel','Creator HQ','Wellness','Routines','Yuu-Kun','Settings'].map(x=><MagicCard key={x}><span className="placeholder-icon">✦</span><b>{x}</b><small>Coming later</small></MagicCard>)}</div></>}
 function MoneyNew({data,setData}){const m=data.money,rem=Math.max(0,(m.weeklyGoal||0)-(m.weeklyEarned||0)),[kind,setKind]=useState(null),[amount,setAmount]=useState(''),[source,setSource]=useState('Gig'),[bucket,setBucket]=useState('life'),[available,setAvailable]=useState(m.availableToday),[editing,setEditing]=useState(false);const save=p=>setData({...data,money:{...m,...p}});const submit=e=>{e.preventDefault();const n=Number(amount);if(!Number.isFinite(n)||n<=0)return;const tx={id:Date.now(),kind,amount:n,source:kind==='earned'?source:bucket,date:localDate()};kind==='earned'?save({weeklyEarned:m.weeklyEarned+n,earnedToday:Number(m.earnedToday||0)+n,transactions:[tx,...m.transactions]}):save({availableToday:Math.max(0,m.availableToday-n),buckets:{...m.buckets,[bucket]:Math.max(0,m.buckets[bucket]-n)},transactions:[tx,...m.transactions]});setKind(null);setAmount('')};const w=m.workWindows?.[0];return <><header><div><small>Make the week work for you.</small><h1>Money</h1></div></header><MagicCard className="money-hero"><div className="money-hero-label"><small>Available today</small><button className="hero-edit" onClick={()=>{if(editing){const n=Number(available);if(Number.isFinite(n)&&n>=0)save({availableToday:n})}setEditing(!editing)}}>{editing?'Save':'Edit'}</button></div>{editing?<input className="hero-input" type="number" min="0" step=".01" value={available} onChange={e=>setAvailable(e.target.value)}/>:<strong>{'$'}{Number(m.availableToday).toFixed(2)}</strong>}<p>Usable money for today</p></MagicCard><SectionHeader title="Money buckets"/><div className="bucket-grid">{[['life','Life'],['con','Con'],['fun','Fun']].map(([id,l])=><div className="bucket" key={id}><small>{l}</small><b>{'$'}{Number(m.buckets[id]||0).toFixed(0)}</b></div>)}</div><SectionHeader title="Weekly Money Mission"/><MagicCard className="mission-card"><div className="mission-top"><div><small>Goal</small><b>{'$'}{m.weeklyGoal}</b></div><div><small>Earned</small><b>{'$'}{m.weeklyEarned}</b></div><label>Goal<input className="inline-input" type="number" min="1" value={m.weeklyGoal} onChange={e=>{const n=Number(e.target.value);if(Number.isFinite(n)&&n>0)save({weeklyGoal:n})}}/></label></div><ProgressSpell value={m.weeklyGoal?m.weeklyEarned/m.weeklyGoal*100:0} label={'$'+rem+' remaining · $'+Math.ceil(rem/Math.max(1,m.daysRemaining))+'/day suggested'}/><div className="money-stats"><div><small>Earned today</small><b>{'$'}{m.earnedToday||0}</b></div><div><small>Days left</small><b>{m.daysRemaining}</b></div></div></MagicCard><SectionHeader title="Quick Log"/><MagicCard><div className="log-actions"><button className="primary" onClick={()=>setKind('earned')}>+ Earned</button><button className="secondary" onClick={()=>setKind('spent')}>− Spent</button></div>{kind&&<form className="log-form" onSubmit={submit}><label>Amount<input required type="number" min=".01" step=".01" inputMode="decimal" value={amount} onChange={e=>setAmount(e.target.value)}/></label>{kind==='earned'?<label>Source<select value={source} onChange={e=>setSource(e.target.value)}><option>Gig</option><option>Creator</option><option>Other</option></select></label>:<label>Bucket<select value={bucket} onChange={e=>setBucket(e.target.value)}><option value="life">Life</option><option value="con">Con</option><option value="fun">Fun</option></select></label>}<button className="primary">Save log</button></form>}</MagicCard><SectionHeader title="Good Work Window"/><MagicCard><div className="window-row"><div><b>{w?.start||'17:00'} – {w?.end||'21:00'}</b><small>{w?.days||'Weekdays'} · {w?.active===false?'Skipped today':"Today's window"}</small></div><button className="tiny-action" onClick={()=>save({workWindows:[{...(w||{}),active:!w?.active}]})}>Toggle today</button></div><button className="primary">Start work</button></MagicCard><SectionHeader title="Upcoming Money"/><MagicCard>{m.upcoming.slice(0,3).map(x=><div className="upcoming-row" key={x.id}><b>{x.title}</b><small>{'$'}{x.amount} · {x.due}</small></div>)}</MagicCard><SectionHeader title="Recent Activity"/><MagicCard>{m.transactions.slice(0,4).map(x=><div className="activity-row" key={x.id}><b>{x.kind==='earned'?'+':'−'}{'$'}{x.amount}</b><small>{x.source} · {x.date}</small></div>)}</MagicCard></>}
 function CosplayNew({data,setData}){const c=data.cosplay,projects=c.projects||[],active=projects.find(p=>p.id===c.activeId)||projects[0], [filter,setFilter]=useState('All'),[selected,setSelected]=useState(null),[edit,setEdit]=useState(null),[pieceEdit,setPieceEdit]=useState(null);const saveProjects=ps=>{const a=ps.find(p=>p.id===c.activeId)||ps[0];setData({...data,cosplay:{...c,projects:ps,activeId:a?.id,name:a?.name,progress:a?.progress,pieces:a?.pieces}})};const blank={name:'',source:'',state:'Planning',targetEvent:'',targetDate:'',budget:0,notes:'',pieces:[]};const visible=projects.filter(p=>filter==='All'||(filter==='Ready'&&p.state==='Ready')||(filter==='Wishlist'&&p.state==='Wishlist')||(filter==='Making'&&p.pieces.some(x=>x.method==='Make'))||(filter==='Buying'&&p.pieces.some(x=>x.method==='Buy')));const progress=p=>p.pieces.length?Math.round(p.pieces.filter(x=>x.status==='Ready').length/p.pieces.length*100):Number(p.progress||0);const submitProject=e=>{e.preventDefault();const p={...edit,id:edit.id||Date.now(),budget:Number(edit.budget)||0,pieces:edit.pieces||[]};saveProjects(edit.id?projects.map(x=>x.id===p.id?p:x):[...projects,p]);setEdit(null)};const submitPiece=e=>{e.preventDefault();const p=projects.find(x=>x.id===selected.id),piece={...pieceEdit,id:pieceEdit.id||Date.now(),cost:Number(pieceEdit.cost)||0};saveProjects(projects.map(x=>x.id===p.id?{...x,pieces:pieceEdit.id?x.pieces.map(z=>z.id===piece.id?piece:z):[...x.pieces,piece]}:x));setPieceEdit(null)};if(selected){const p=projects.find(x=>x.id===selected.id)||active,ready=p.pieces.filter(x=>x.status==='Ready').length,total=p.pieces.reduce((n,x)=>n+Number(x.cost||0),0),next=p.pieces.filter(x=>x.status!=='Ready'&&x.due).sort((a,b)=>a.due.localeCompare(b.due))[0];return <><header><div><small>{p.source||'Project detail'}</small><h1>{p.name}</h1></div><button className="secondary" onClick={()=>setSelected(null)}>Back</button></header><MagicCard><b>{p.targetEvent||'No event set'}{p.targetDate&&' · '+p.targetDate}</b><ProgressSpell value={progress(p)} label={ready+' of '+p.pieces.length+' pieces ready'}/><p className="muted">Budget estimate: ${total}{p.budget?' of $'+p.budget+' target':''}</p>{next&&<p className="next-piece">Next: {next.name} · due {next.due}</p>}</MagicCard><SectionHeader title="Pieces"/><MagicCard>{p.pieces.map(x=><div className="piece" key={x.id}><div><b>{x.name}</b><small>{x.method} · ${x.cost} · {x.status}{x.due?' · '+x.due:''}</small></div><button className="tiny-action" onClick={()=>setPieceEdit({...x})}>Edit</button></div>)}{!p.pieces.length&&<p className="muted">Nothing listed yet.</p>}<button className="primary" onClick={()=>setPieceEdit({name:'',method:'Make',cost:0,status:'Planning',due:'',link:'',notes:''})}>+ Add Piece</button></MagicCard><button className="secondary" onClick={()=>setEdit({...p})}>Edit project</button>{pieceEdit&&<MagicCard><form className="log-form" onSubmit={submitPiece}><label>Name<input required value={pieceEdit.name} onChange={e=>setPieceEdit({...pieceEdit,name:e.target.value})}/></label><label>Method<select value={pieceEdit.method} onChange={e=>setPieceEdit({...pieceEdit,method:e.target.value})}><option>Make</option><option>Buy</option><option>Commission</option></select></label><label>Cost<input type="number" min="0" step=".01" value={pieceEdit.cost} onChange={e=>setPieceEdit({...pieceEdit,cost:e.target.value})}/></label><label>Status<select value={pieceEdit.status} onChange={e=>setPieceEdit({...pieceEdit,status:e.target.value})}>{['Planning','In Progress','Ordered','Arrived','Ready','Repair'].map(s=><option key={s}>{s}</option>)}</select></label><label>Due date<input type="date" value={pieceEdit.due||''} onChange={e=>setPieceEdit({...pieceEdit,due:e.target.value})}/></label><label>Link<input value={pieceEdit.link||''} onChange={e=>setPieceEdit({...pieceEdit,link:e.target.value})}/></label><label>Notes<input value={pieceEdit.notes||''} onChange={e=>setPieceEdit({...pieceEdit,notes:e.target.value})}/></label><button className="primary">Save piece</button></form></MagicCard>}</>};return <><header><div><small>Build it piece by piece ✨</small><h1>Cosplay</h1></div><button className="primary" onClick={()=>setEdit(blank)}>+ New Cosplay</button></header><div className="filter-chips">{['All','Making','Buying','Ready','Wishlist'].map(x=><button className={filter===x?'selected':''} onClick={()=>setFilter(x)} key={x}>{x}</button>)}</div>{visible.map(p=>{const next=p.pieces.filter(x=>x.status!=='Ready'&&x.due).sort((a,b)=>a.due.localeCompare(b.due))[0];return <MagicCard key={p.id} className={p.id===c.activeId?'active-project':''}><button className="project-card-button" onClick={()=>setSelected(p)}><span className="project-icon">✿</span><b>{p.name}</b><small>{p.source||'Cosplay project'} · {p.targetEvent||'No event'}</small><ProgressSpell value={progress(p)} label={p.pieces.length+' pieces · '+p.state}/><small>{next?'Next: '+next.name+' · '+next.due:'Nothing pending'}</small></button><button className="tiny-action" onClick={()=>{saveProjects(projects.map(x=>({...x,activeId:undefined})));saveProjects(projects.map(x=>x.id===p.id?x:x));setData({...data,cosplay:{...c,projects,activeId:p.id,name:p.name,progress:progress(p),pieces:p.pieces}})}}>{p.id===c.activeId?'Current':'Make current'}</button></MagicCard>})}{!visible.length&&<MagicCard><b>No cosplays yet ✨</b><p className="muted">Start with the character living rent-free in your head.</p></MagicCard>}{edit&&<MagicCard><form className="log-form" onSubmit={submitProject}><label>Name<input required value={edit.name} onChange={e=>setEdit({...edit,name:e.target.value})}/></label><label>Source<input value={edit.source||''} onChange={e=>setEdit({...edit,source:e.target.value})}/></label><label>State<select value={edit.state} onChange={e=>setEdit({...edit,state:e.target.value})}>{['Wishlist','Planning','In Progress','Ready','Archived'].map(s=><option key={s}>{s}</option>)}</select></label><label>Target event<input value={edit.targetEvent||''} onChange={e=>setEdit({...edit,targetEvent:e.target.value})}/></label><label>Target date<input type="date" value={edit.targetDate||''} onChange={e=>setEdit({...edit,targetDate:e.target.value})}/></label><label>Budget target<input type="number" min="0" value={edit.budget||0} onChange={e=>setEdit({...edit,budget:e.target.value})}/></label><label>Notes<input value={edit.notes||''} onChange={e=>setEdit({...edit,notes:e.target.value})}/></label><button className="primary">Save project</button></form></MagicCard>}</>}
-function App(){const [screen,setScreen]=useState('home'),[data,setData]=useStore();const page=screen==='home'?<HomeCommand {...{data,setData,setScreen}}/>:screen==='plan'?<TaskCrud {...{data,setData}}/>:screen==='money'?<MoneyCrud {...{data,setData}}/>:screen==='cosplay'?<CosplayCrud {...{data,setData}}/>:screen==='conventions'?<ConventionCrud {...{data,setData}}/>:screen==='travel'?<TravelCrud {...{data,setData}}/>:screen==='creator'?<CreatorHQ {...{data,setData}}/>:screen==='wellness'?<WellnessCrud {...{data,setData}}/>:screen==='routines'?<RoutineCrud {...{data,setData}}/>:screen==='yuu'?<YuuKun {...{data,setData}}/>:screen==='settings'?<Settings {...{data,setData}}/>:<MoreFixed setScreen={setScreen}/>;return <AppShell {...{screen,setScreen}}>{page}</AppShell>}
+function App(){const [screen,setScreen]=useState('home'),[data,setData,cloud]=useStore();const page=screen==='home'?<HomeCommand {...{data,setData,setScreen}}/>:screen==='plan'?<TaskCrud {...{data,setData}}/>:screen==='money'?<MoneyCrud {...{data,setData}}/>:screen==='cosplay'?<CosplayCrud {...{data,setData}}/>:screen==='conventions'?<ConventionCrud {...{data,setData}}/>:screen==='travel'?<TravelCrud {...{data,setData}}/>:screen==='creator'?<CreatorHQ {...{data,setData}}/>:screen==='wellness'?<WellnessCrud {...{data,setData}}/>:screen==='routines'?<RoutineCrud {...{data,setData}}/>:screen==='yuu'?<YuuKun {...{data,setData}}/>:screen==='settings'?<Settings {...{data,setData,cloud}}/>:<MoreFixed setScreen={setScreen}/>;return <AppShell {...{screen,setScreen}}>{page}</AppShell>}
 createRoot(document.getElementById('root')).render(<App/>);
 function HomeFixed({data,setData,setScreen}){const project=getActiveCosplay(data.cosplay),progress=getCosplayProgress(project),next=getNextCosplayPiece(project),today=localDate(),tasks=data.tasks.filter(t=>t.date===today),m=data.money;return <><header><div><small>{new Intl.DateTimeFormat(undefined,{weekday:'long',month:'long',day:'numeric'}).format(new Date())}</small><h1>Home</h1></div></header><YuuBubble>Yare yare. {tasks.filter(t=>!t.done).length} things today.</YuuBubble><SectionHeader title="Today"/><MagicCard><div className="task-list">{tasks.map(t=><TaskRow key={t.id} task={t} onToggle={()=>setData({...data,tasks:data.tasks.map(x=>x.id===t.id?{...x,done:!x.done}:x)})}/>)}</div></MagicCard><SectionHeader title="Money Today"/><MagicCard className="money-home" onClick={()=>setScreen('money')}><strong>${m.availableToday.toFixed(2)}</strong></MagicCard><SectionHeader title="Current Cosplay"/><MagicCard className="cosplay-home" onClick={()=>setScreen('cosplay')}>{project?<><div className="cosplay-summary"><div className="project-icon">✿</div><div><b>{project.name}</b><small>{project.targetEvent||'Cosplay project'}{project.targetDate?' · '+project.targetDate:''}</small></div></div><ProgressSpell value={progress} label="Piece readiness"/>{next&&<p className="next-piece">Next: {next.name}{next.due?' · due '+next.due:''}</p>}</>:<div className="empty-cosplay"><b>No active cosplay yet ✨</b><small>Choose a project in Cosplay to show it here.</small></div>}</MagicCard><SectionHeader title="Coming Up"/><MagicCard className="coming-up">{(()=>{const c=getNearestConvention(data.conventions?.items);return c?<><b>{c.name}</b><small>{countdown(c)} · {c.startDate}{c.location?" · "+c.location:""}</small></>:<b>No upcoming conventions yet.</b>})()}</MagicCard></>}
 function MoreFixed({setScreen}){const links=[['creator','Creator HQ'],['wellness','Wellness'],['routines','Routines'],['yuu','Yuu-Kun'],['settings','Settings']];return <><header><div><small>Your wider world</small><h1>More</h1></div></header><div className="placeholder-grid"><MagicCard><button className="project-card-button" onClick={()=>setScreen('conventions')}><b>Conventions</b><small>Open command center</small></button></MagicCard><MagicCard><button className="project-card-button" onClick={()=>setScreen('travel')}><b>Travel</b><small>Open trip command center</small></button></MagicCard>{links.map(([id,label])=><MagicCard key={id}><button className="project-card-button" onClick={()=>setScreen(id)}><b>{label}</b><small>Open module</small></button></MagicCard>)}</div></>}
