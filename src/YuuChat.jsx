@@ -34,7 +34,7 @@ export default function YuuChat({data,setData,setScreen}){
    if(!text)return;
    const parsed=parseIntent(text,{lastIntent:data.yuu?.lastIntent});
    let intent=parsed.intent;
-   let options={seed:history.length};
+   let options={seed:history.length,topic:parsed.topic};
    if(parsed.intent==='follow_up'){
      const prior=parsed.lastIntent||data.yuu?.lastIntent;
      const canContinue=['today_tasks','upcoming','money_status','cosplay_status','convention_status','travel_status','creator_status','routine_status','wellness_status','work_status'].includes(prior);
