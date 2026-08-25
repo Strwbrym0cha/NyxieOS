@@ -4,7 +4,7 @@ NyxieOS is a mobile-first personal dashboard designed around Nyxie's real life: 
 
 ## Product direction
 
-NyxieOS is not a recolored KatOS and not a generic planner. It should feel like a magical pink personal manager built specifically for a cosplayer/creator whose schedule, money, projects, and conventions overlap constantly.
+NyxieOS is not a recolored KatOS and not a generic planner. It is a magical pink personal manager built specifically for a cosplayer/creator whose schedule, money, projects, and conventions overlap constantly.
 
 ### Core V1 features
 
@@ -38,8 +38,15 @@ Nyxie primarily uses a phone. Design for 360–430px screens first. Desktop/tabl
 
 Yuu-Kun is NyxieOS's mini blonde catboy assistant. He is bratty, useful, and schedule-focused. His recurring phrase is “Yare yare.” He may help with schedules, deadlines, money, cosplay, and conventions. He must never comment on or interfere with relationships.
 
-## Build philosophy
+## Phase 1 foundation
 
-Codex builds the functional skeleton and engineering foundation. Product/UI decisions should follow the design spec in `docs/NYXIEOS_DESIGN_SPEC.md` and the repo instructions in `AGENTS.md`.
+The initial Vite/React implementation lives in `src/` and uses plain CSS custom properties plus localStorage prototype persistence.
 
-Start small, keep it phone-friendly, and avoid adding features just because they sound cool.
+```bash
+npm install
+npm run dev
+npm run build
+```
+
+Product and engineering requirements are documented in `AGENTS.md` and `docs/NYXIEOS_DESIGN_SPEC.md`.
+
