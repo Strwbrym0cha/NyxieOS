@@ -1,7 +1,7 @@
 const RELATIONSHIP_PATTERN=/\b(relationship|relationships|dating|crush|ex|exes|partner|partners|boyfriend|girlfriend|romance|romantic|love life|text my ex)\b/;
 const MODULES={home:'home',plan:'plan',money:'money',cosplay:'cosplay',convention:'conventions',conventions:'conventions',travel:'travel',creator:'creator',content:'creator',wellness:'wellness',routine:'routines',routines:'routines',yuu:'yuu',settings:'settings'};
 
-export function normalizeInput(value=''){return String(value).toLowerCase().replace(/[’‘]/g,"'").replace(/[—–]/g,'-').replace(/[^a-z0-9'$? ]/g,' ').replace(/\s+/g,' ').trim()}
+export function normalizeInput(value=''){return String(value).toLowerCase().replace(/[’‘]/g,"'").replace(/[—–]/g,'-').replace(/[^a-z0-9'$ ]/g,' ').replace(/\s+/g,' ').trim()}
 
 export function parseIntent(input,{lastIntent=null}={}){
  const text=normalizeInput(input);
