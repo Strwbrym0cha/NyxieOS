@@ -19,6 +19,8 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/^(?:hi|hey|hello|yo|hiya|good morning|good evening)\b/.test(text))return {intent:'greeting',text};
  if(/^(?:thanks|thank you|thx|ty)\b/.test(text))return {intent:'thanks',text};
  if(/^(?:help|what can you do|commands|options)\b/.test(text))return {intent:'help',text};
+ if(/\b(planned needs|planned expenses|planned upcoming|how much .*planned)\b/.test(text))return {intent:'money_status',topic:'planned',text};
+ if(/\b(how much|cost|budget|need|planned)\b.*\bcosplay\b/.test(text))return {intent:'money_status',topic:'cosplay',text};
  if(/\b(low energy|tired|wellness|water|meals?|sleep|rest day|movement|feeling exhausted)\b/.test(text))return {intent:'wellness_status',text};
  if(/\b(work window|work windows|shift|shifts|when should i work|when can i work|work today|work tonight)\b/.test(text))return {intent:'work_status',text};
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
