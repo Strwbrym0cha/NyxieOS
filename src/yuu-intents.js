@@ -13,7 +13,8 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(done)return {intent:'complete_task',title:done[1].trim(),text};
  const open=text.match(/^(?:open|show|go to|take me to)\s+(?:the\s+)?(home|plan|money|cosplay|conventions?|travel|creator(?: hq)?|content|wellness|routines?|yuu(?: kun)?|settings)\b/);
  if(open){const key=open[1].replace(' yuu kun','yuu').replace(' hq','');return {intent:'open_module',module:MODULES[key]||'more',text}}
- if(/^(?:skip|skip today)\s+(?:my\s+)?routine(?:\s+(.+))?$/.test(text)){const match=text.match(/^(?:skip|skip today)\s+(?:my\s+)?routine(?:\s+(.+))?$/);return {intent:'skip_routine',title:match?.[1]?.trim()||'',text}}
+ const skip=text.match(/^skip(?: today)?\s+(?:my\s+)?routine(?:\s+(.+))?$/);
+ if(skip){const title=(skip[1]||'').replace(/\s+today$/,'').trim();return {intent:'skip_routine',title,text}}
  if(/^(?:what else|anything else|and after that|what about tomorrow|and tomorrow)$/.test(text))return {intent:'follow_up',kind:text.includes('tomorrow')?'tomorrow':'more',lastIntent,text};
  if(/^(?:hi|hey|hello|yo|hiya|good morning|good evening)\b/.test(text))return {intent:'greeting',text};
  if(/^(?:thanks|thank you|thx|ty)\b/.test(text))return {intent:'thanks',text};
