@@ -1,0 +1,529 @@
+/* NyxieOS Magical V3 overrides
+   Mobile-first visual polish layered on top of the existing functional styles. */
+
+:root {
+  --magic-pink: #f45bb2;
+  --magic-pink-deep: #d83e98;
+  --magic-blush: #ffd6ec;
+  --magic-lavender: #b89cff;
+  --magic-lavender-soft: #eee6ff;
+  --magic-plum: #432442;
+  --magic-cream: #fff8fc;
+  --magic-white: #ffffff;
+  --magic-line: rgba(197, 116, 174, 0.22);
+  --magic-shadow: 0 14px 34px rgba(67, 36, 66, 0.10);
+  --magic-glow: 0 0 28px rgba(244, 91, 178, 0.15);
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  background: var(--magic-cream);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  font-size: 17px !important;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 214, 236, 0.92), transparent 24%),
+    radial-gradient(circle at 92% 18%, rgba(184, 156, 255, 0.25), transparent 28%),
+    radial-gradient(circle at 55% 78%, rgba(244, 91, 178, 0.10), transparent 30%),
+    linear-gradient(180deg, #fff9fd 0%, #fff2fa 48%, #faf3ff 100%) !important;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  opacity: 0.38;
+  background-image:
+    radial-gradient(circle, rgba(244,91,178,.55) 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(184,156,255,.45) 1px, transparent 1.5px);
+  background-position: 20px 26px, 83px 95px;
+  background-size: 118px 118px, 151px 151px;
+}
+
+body::after {
+  background:
+    radial-gradient(circle at 18% 36%, rgba(255,255,255,.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 84% 42%, rgba(255,255,255,.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 72% 72%, rgba(255,255,255,.7) 0 1.5px, transparent 2.5px);
+}
+
+#root,
+.app {
+  width: 100% !important;
+  min-height: 100dvh;
+  position: relative;
+  z-index: 1;
+}
+
+.app {
+  max-width: 560px !important;
+  margin: 0 auto !important;
+}
+
+main {
+  width: 100% !important;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    18px
+    calc(138px + env(safe-area-inset-bottom)) !important;
+}
+
+header {
+  position: relative;
+  margin-bottom: 26px !important;
+  padding: 6px 2px 2px;
+}
+
+header::after {
+  content: "✦";
+  position: absolute;
+  right: 4px;
+  top: 0;
+  color: var(--magic-pink);
+  font-size: 1.35rem;
+  filter: drop-shadow(0 0 8px rgba(244,91,178,.35));
+}
+
+h1 {
+  font-size: clamp(2.4rem, 11vw, 3.35rem) !important;
+  line-height: .95 !important;
+  letter-spacing: -0.04em !important;
+  color: var(--magic-plum);
+  text-shadow: 0 3px 14px rgba(244,91,178,.08);
+}
+
+h2 {
+  font-size: 1.42rem !important;
+  line-height: 1.1;
+  color: var(--magic-plum);
+}
+
+small {
+  font-size: .9rem !important;
+  line-height: 1.4 !important;
+}
+
+.section-head {
+  margin: 34px 2px 14px !important;
+}
+
+.section-head h2::before {
+  content: "✦";
+  color: var(--magic-pink);
+  margin-right: 8px;
+  font-size: .82em;
+}
+
+.card {
+  position: relative;
+  border-radius: 26px !important;
+  padding: 21px !important;
+  border: 1px solid var(--magic-line) !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(255,247,253,.96)) !important;
+  box-shadow: var(--magic-shadow), var(--magic-glow) !important;
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  width: 88px;
+  height: 88px;
+  right: -42px;
+  top: -46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,214,236,.78), rgba(184,156,255,.12) 58%, transparent 70%);
+  pointer-events: none;
+}
+
+.card:empty {
+  display: none !important;
+}
+
+/* Yuu-Kun gets a mascot-like system panel instead of a plain notification box. */
+.yuu {
+  position: relative;
+  align-items: center;
+  gap: 15px !important;
+  padding: 18px !important;
+  margin-bottom: 28px !important;
+  border-radius: 25px !important;
+  border: 1px solid rgba(244,91,178,.24) !important;
+  background:
+    radial-gradient(circle at 90% 12%, rgba(255,255,255,.94), transparent 22%),
+    linear-gradient(135deg, #ffe5f3 0%, #f9e9ff 52%, #fff8fd 100%) !important;
+  box-shadow: 0 12px 28px rgba(134, 67, 118, .10), 0 0 26px rgba(244,91,178,.10);
+}
+
+.yuu::after {
+  content: "✦  ₊˚⊹♡";
+  position: absolute;
+  right: 16px;
+  top: 10px;
+  color: rgba(216,62,152,.48);
+  font-size: .78rem;
+  letter-spacing: 2px;
+}
+
+.yuu-avatar {
+  position: relative;
+  width: 58px !important;
+  height: 58px !important;
+  flex-basis: 58px !important;
+  border: 3px solid rgba(255,255,255,.86);
+  background: linear-gradient(145deg, #fff0bf, #edc375) !important;
+  color: #7d2f69 !important;
+  box-shadow: 0 7px 17px rgba(97,58,76,.15);
+}
+
+.yuu-avatar::before,
+.yuu-avatar::after {
+  content: "";
+  position: absolute;
+  top: -9px;
+  width: 18px;
+  height: 19px;
+  background: #f3ce86;
+  border: 2px solid rgba(255,255,255,.82);
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+.yuu-avatar::before { left: 4px; }
+.yuu-avatar::after { right: 4px; }
+
+.yuu b {
+  font-family: Fredoka, system-ui, sans-serif;
+  font-size: 1.08rem;
+}
+
+.yuu p {
+  font-size: 1rem !important;
+  line-height: 1.45;
+}
+
+.task-row,
+.task-list label {
+  min-height: 58px !important;
+  gap: 13px !important;
+  font-size: 1.03rem;
+}
+
+.task-row input,
+.task-list input {
+  width: 23px !important;
+  height: 23px !important;
+}
+
+.task-copy small {
+  margin-top: 3px;
+  font-size: .82rem !important;
+}
+
+.urgent,
+.status {
+  padding: 7px 11px !important;
+  font-size: .76rem !important;
+  font-weight: 800;
+  border: 1px solid rgba(244,91,178,.16);
+  background: linear-gradient(135deg, #ffe1f1, #f3e8ff) !important;
+}
+
+.quick-add {
+  margin-top: 16px !important;
+}
+
+.quick-add input,
+.log-form input,
+.log-form select,
+.log-form textarea,
+.card > label input,
+.card > label select,
+.card > label textarea {
+  min-height: 52px !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(184,156,255,.25) !important;
+  background: rgba(255,255,255,.92) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.quick-add button,
+.primary,
+.secondary,
+.tiny-action,
+.hero-edit {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+  font-weight: 800 !important;
+}
+
+.quick-add button,
+.primary {
+  background: linear-gradient(135deg, #f45bb2 0%, #df479e 52%, #bd69e8 100%) !important;
+  box-shadow: 0 9px 20px rgba(244,91,178,.24);
+}
+
+.secondary,
+.tiny-action {
+  background: linear-gradient(135deg, #f8e7f4, #eee7ff) !important;
+  color: var(--magic-plum) !important;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+  transform: scale(.98);
+}
+
+/* Hero information should feel like a spell card, not a finance dashboard. */
+.money-home,
+.money-hero,
+.hero-money,
+.con-hero {
+  border: 0 !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 86% 14%, rgba(255,255,255,.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 76% 28%, rgba(255,255,255,.12) 0 1.5px, transparent 2.5px),
+    linear-gradient(135deg, #432442 0%, #743461 48%, #a63b84 100%) !important;
+  box-shadow: 0 18px 38px rgba(67,36,66,.25), 0 0 30px rgba(244,91,178,.12) !important;
+}
+
+.money-home::after,
+.money-hero::after,
+.hero-money::after,
+.con-hero::after {
+  content: "✦  ✧  ✦";
+  position: absolute;
+  right: 18px;
+  bottom: 15px;
+  color: rgba(255,255,255,.22);
+  letter-spacing: 7px;
+  font-size: .9rem;
+}
+
+.money-home-top strong,
+.money-hero strong,
+.hero-money strong {
+  font-size: clamp(3rem, 14vw, 4.25rem) !important;
+  line-height: .95;
+}
+
+.money-home-bottom {
+  font-size: .9rem !important;
+  flex-wrap: wrap;
+}
+
+.progress {
+  height: 14px !important;
+  border-radius: 999px !important;
+  background: rgba(126,84,137,.11) !important;
+}
+
+.progress i {
+  background: linear-gradient(90deg, #f45bb2 0%, #ec65c0 52%, #b89cff 100%) !important;
+  box-shadow: 0 0 13px rgba(244,91,178,.42);
+}
+
+.progress-label {
+  font-size: .9rem !important;
+}
+
+/* Cosplay should feel like a cute magical inventory card. */
+.cosplay-home,
+.active-project,
+.project-card-button {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(184,156,255,.16), transparent 30%),
+    linear-gradient(145deg, #fff 0%, #fff4fb 100%) !important;
+}
+
+.project-icon,
+.placeholder-icon {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(145deg, #ffe0f1, #eee4ff) !important;
+  box-shadow: inset 0 0 0 1px rgba(244,91,178,.12);
+}
+
+.next-piece {
+  padding: 14px !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, #f9e7f5, #f0e8ff) !important;
+  color: #754770 !important;
+}
+
+.coming-up {
+  background:
+    linear-gradient(145deg, #fff 0%, #fff1fa 62%, #f4edff 100%) !important;
+}
+
+.coming-up b {
+  font-family: Fredoka, system-ui, sans-serif;
+  font-size: 1.1rem;
+}
+
+.segmented {
+  padding: 6px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #f9e6f4, #eee6ff) !important;
+  box-shadow: inset 0 0 0 1px rgba(184,156,255,.12);
+}
+
+.segmented button {
+  min-height: 50px !important;
+  font-size: .92rem;
+}
+
+.segmented button.selected {
+  color: #a0357d !important;
+  background: linear-gradient(145deg, #fff, #fff7fc) !important;
+  box-shadow: 0 6px 14px rgba(103,63,104,.12) !important;
+}
+
+.bucket-grid {
+  gap: 12px !important;
+}
+
+.bucket {
+  border-radius: 20px !important;
+  padding: 17px !important;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(184,156,255,.12), transparent 28%),
+    linear-gradient(145deg, #fff, #fff0f9) !important;
+  box-shadow: 0 9px 23px rgba(93,55,90,.08);
+}
+
+.bucket b {
+  font-size: 1.55rem !important;
+}
+
+.money-stats {
+  gap: 12px !important;
+}
+
+.money-stats > div {
+  padding: 13px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff7fc, #f7f0ff);
+}
+
+.log-actions button {
+  min-height: 58px !important;
+  font-size: 1rem;
+}
+
+.flight-card {
+  border: 1px solid rgba(244,91,178,.30) !important;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(184,156,255,.18), transparent 28%),
+    linear-gradient(145deg, #fff, #fff0f9) !important;
+}
+
+/* More menu tiles get a little more identity without changing navigation. */
+.placeholder-grid .card {
+  min-height: 132px !important;
+  background:
+    radial-gradient(circle at 88% 14%, rgba(184,156,255,.16), transparent 24%),
+    linear-gradient(145deg, #fff, #fff2fa) !important;
+}
+
+/* Floating dock should read as a real mobile navigation object. */
+.bottom-nav {
+  bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  width: min(520px, calc(100% - 22px)) !important;
+  gap: 5px !important;
+  padding: 8px !important;
+  border-radius: 29px !important;
+  border: 1px solid rgba(244,91,178,.24) !important;
+  background: rgba(255,248,253,.94) !important;
+  box-shadow:
+    0 15px 36px rgba(67,36,66,.20),
+    0 0 30px rgba(244,91,178,.14) !important;
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.bottom-nav button {
+  min-height: 64px !important;
+  border-radius: 21px !important;
+  font-size: .79rem !important;
+  color: #896d8d !important;
+}
+
+.bottom-nav button span {
+  font-size: 1.48rem !important;
+  line-height: 1;
+}
+
+.bottom-nav button.active {
+  color: #9f3479 !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.95), transparent 36%),
+    linear-gradient(145deg, #ffddef, #eee4ff) !important;
+  box-shadow: 0 8px 18px rgba(244,91,178,.14), inset 0 0 0 1px rgba(255,255,255,.75);
+}
+
+@media (max-width: 430px) {
+  main {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .card {
+    padding: 19px !important;
+  }
+
+  h1 {
+    font-size: clamp(2.35rem, 12vw, 3rem) !important;
+  }
+
+  .bucket-grid {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+  }
+
+  .bucket {
+    padding: 14px !important;
+  }
+
+  .bucket small {
+    font-size: .78rem !important;
+  }
+
+  .bottom-nav {
+    width: calc(100% - 16px) !important;
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body { font-size: 16px !important; }
+  main { padding-left: 13px !important; padding-right: 13px !important; }
+  .card { padding: 17px !important; }
+  .money-stats { grid-template-columns: 1fr !important; }
+  .bottom-nav button { font-size: .72rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
