@@ -1,3 +1,4 @@
+import {getPlannedNeeds} from './money-derived.js';
 const DAY_NAMES=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 export const localDate=(value=new Date())=>{
@@ -31,6 +32,7 @@ export function getPlannerContext(data={},date=localDate()){
  const urgentToday=incompleteToday.filter(task=>task.urgent);
  const tomorrowTasks=tasks.filter(task=>task.date===shiftDate(date,1)&&!task.done);
  const overdueTasks=tasks.filter(task=>task.date&&task.date<date&&!task.done);
+ const plannedNeeds=getPlannedNeeds(data);
  const money=data.money||{};
  const remaining=Math.max(0,Number(money.weeklyGoal||0)-Number(money.weeklyEarned||0));
  const workWindows=(money.workWindows||[]).filter(window=>workWindowApplies(window,date));
@@ -70,7 +72,7 @@ export function getPlannerContext(data={},date=localDate()){
  const wellness=data.wellness?.[date]||null;
  return {
    date,tasks,todayTasks,incompleteToday,timedToday,urgentToday,tomorrowTasks,overdueTasks,
-   money:{...money,remaining,workWindows,upcomingMoney},
+   money:{...money,remaining,workWindows,upcomingMoney,plannedNeeds},
    activeCosplay,cosplayPieces,unfinishedPieces,overduePieces,dueSoonPieces,
    nearestConvention,upcomingConventions,conventionPrep,
    nextTrip,nextFlight,stays,transport,tripPacking,
