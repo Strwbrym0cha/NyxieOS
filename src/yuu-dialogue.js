@@ -1,5 +1,5 @@
 import {formatDate,daysUntil,getPlannerContext} from './yuu-context.js';
-import {toMoneyNumber} from './money-derived.js';
+import {getLoggedGigProfit,getTodayMoneyTargetSummary,getUpcomingObligations,toMoneyNumber} from './money-derived.js';
 import {isReady,normalizeStatus} from './cosplay-derived.js';
 
 const pick=(items,seed=0)=>items[Math.abs(seed)%items.length];
@@ -46,11 +46,33 @@ export function generateReply(intent,data,settings={},options={}){
    if(options.topic==='planned'){
     return {text:planned.total?'You have '+money(planned.total)+' in planned needs across cosplay, conventions, travel, and manual upcoming items.':'Nothing big is planned yet. Your future wallet is suspiciously peaceful.',state:'money'};
    }
-   const fact=money(m.availableToday)+' available today. Weekly mission: '+money(m.weeklyEarned)+' of '+money(m.weeklyGoal)+' earned, '+money(m.remaining)+' remaining, '+m.daysRemaining+' days left.';
-   const window=m.workWindows[0];
-   const extra=window?' Work today: '+(window.start||'flexible')+'–'+(window.end||'flexible')+'.':m.upcomingMoney[0]?' Next money item: '+m.upcomingMoney[0].title+'.':'';
+   if(options.topic==='dailyTarget'){
+    const target=m.targetSummary||getTodayMoneyTargetSummary(m,date);
+    return {text:target.hasCustomTarget?'Today target is '+money(target.target)+', with '+money(target.targetRemaining)+' left after '+money(target.earnedToday)+' earned today.':'No custom target today. Your suggested pace is '+money(target.suggestedToday)+' from the weekly mission.',state:'money'};
+   }
+   if(options.topic==='work'){
+    const windows=m.workWindows||[];
+    const active=windows.filter(item=>item.checkin?.status!=='skipped');
+    return {text:active.length?'Work window today: '+active.map(item=>(item.start||'flexible')+'–'+(item.end||'flexible')+(item.checkin?.status==='started'?' (started)':'')).join(' · ')+'.':windows.length?'You skipped today’s work window. No punishment—tomorrow is another day.':'No active work window applies today.',state:'money'};
+   }
+   if(options.topic==='obligations'){
+    const items=getUpcomingObligations(m).slice(0,more?6:3);
+    return {text:items.length?'Coming up: '+items.map(item=>(item.title||'Untitled')+' '+money(item.amount)+(item.dueDate?' due '+formatDate(item.dueDate):'')).join(' · ')+'.':'No active bills or subscriptions are listed.',state:'money'};
+   }
+   if(options.topic==='fund'){
+    const query=String(options.subject||'').toLowerCase();
+    const fund=(m.savingsGoals||[]).find(item=>query&&String(item.type||'').toLowerCase().includes(query))||(m.savingsGoals||[]).find(item=>String(item.type||'').toLowerCase().includes('fund'));
+    if(!fund)return {text:'No matching savings or fund is listed yet.',state:'money'};
+    return {text:(fund.title||fund.type||'Fund')+' is at '+money(fund.current)+' of '+money(fund.target)+'.',state:'money'};
+   }
+   if(options.topic==='gigProfit'){
+    const profit=m.gigProfit||getLoggedGigProfit(m);
+    const signed=value=>(value<0?'-$'+Math.abs(value).toFixed(2):money(value));
+    return {text:'Logged gig profit is '+signed(profit.profit)+'. Earned '+money(profit.earned)+' and spent '+money(profit.spent)+' in Gig-related transactions.',state:'money'};
+   }
+   const fact=money(m.availableToday)+' available today, '+money(m.earnedToday)+' earned today. Weekly mission: '+money(m.weeklyEarned)+' of '+money(m.weeklyGoal)+' earned, '+money(m.remaining)+' remaining, '+m.daysRemaining+' days left. Suggested pace: '+money(m.mission?.suggestedPerDay||0)+' per remaining day.';
    const plannedLine=planned.total?' Planned needs: '+money(planned.total)+'.':'';
-   return {text:tone==='Gentle'?'You have '+fact+plannedLine+extra:tone==='Bratty'?'Yare yare. '+fact+plannedLine+' Keep the treasure quest moving.' :'Here is the money snapshot: '+fact+plannedLine+extra,state:'money'};
+   return {text:tone==='Gentle'?'You have '+fact+plannedLine:tone==='Bratty'?'Yare yare. '+fact+plannedLine+' Keep the treasure quest moving.':'Here is the money snapshot: '+fact+plannedLine,state:'money'};
   }
   case 'cosplay_status':{
    const p=c.activeCosplay;
