@@ -20,7 +20,7 @@ const money=value=>{
  return '$'+(Number.isFinite(number)?number:0).toFixed(2);
 };
 const numberValue=value=>{const number=Number(value);return Number.isFinite(number)?number:0};
-const idFor=()=>Date.now()+Math.floor(Math.random()*1000);
+const idFor=()=>Date.now()+Math.floor(Math.random()*1000);\nconst hasId=value=>value?.id!==null&&value?.id!==undefined&&value?.id!=='';
 const today=()=>localDate();
 const timeNow=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 const validBucket=value=>['life','con','fun'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'';
@@ -78,7 +78,7 @@ export default function MoneyCrud({data,setData,setScreen}){
    if(window.confirm('Delete this item?'))saveMoney({[key]:(root[key]||[]).filter(row=>row.id!==item.id)});
  };
  const saveTransaction=next=>{
-   const rows=root.transactions||[];const old=next.id?rows.find(row=>row.id===next.id):null;
+   const rows=root.transactions||[];const old=hasId(next)?rows.find(row=>row.id===next.id):null;
    const clean={...next,id:next.id||idFor(),kind:getTransactionKind(next),amount:Math.max(0,numberValue(next.amount)),source:String(next.source||next.label||'').trim(),bucket:validBucket(next.bucket),date:next.date||today(),gigRelated:Boolean(next.gigRelated),note:next.note||''};
    let adjusted=old?applyMoneyTransaction(root,old,-1):root;
    adjusted=applyMoneyTransaction(adjusted,clean,1);
