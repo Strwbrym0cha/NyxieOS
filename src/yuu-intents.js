@@ -34,7 +34,7 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/\b(what needs to post|post soon|posting today|what am i posting)\b/.test(text))return {intent:'creator_status',topic:'posting',text};
  if(/\b(what content.*con|content.*convention|con content)\b/.test(text))return {intent:'creator_status',topic:'convention',text};
  if(/\b(who am i shooting with|who.*shooting|collaborator|photographer)\b/.test(text))return {intent:'creator_status',topic:'collaborators',text};
- if(/\b(what caption|caption did i write)\b/.test(text))return {intent:'creator_status',topic:'caption',text};
+ const caption=text.match(/(?:what caption did i write|what is the caption|what caption).*?\bfor\s+(.+)$/);\n if(caption)return {intent:'creator_status',topic:'caption',subject:caption[1].trim(),text};\n if(/\b(what caption|caption did i write)\b/.test(text))return {intent:'creator_status',topic:'caption',text};
  if(/\b(creator work.*attention|creator.*attention|content needs attention)\b/.test(text))return {intent:'creator_status',topic:'attention',text};
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
  if(/\b(what.s next at the con|what is next at the con|next at the convention|next at con)\b/.test(text))return {intent:'convention_status',topic:'next',text};
