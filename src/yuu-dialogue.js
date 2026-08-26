@@ -1,5 +1,6 @@
 import {formatDate,daysUntil,getPlannerContext} from './yuu-context.js';
 import {toMoneyNumber} from './money-derived.js';
+import {isReady,normalizeStatus} from './cosplay-derived.js';
 
 const pick=(items,seed=0)=>items[Math.abs(seed)%items.length];
 const money=value=>String.fromCharCode(36)+toMoneyNumber(value).toFixed(2);
@@ -54,10 +55,40 @@ export function generateReply(intent,data,settings={},options={}){
   case 'cosplay_status':{
    const p=c.activeCosplay;
    if(!p)return {text:'No active cosplay is selected. Choose one in Cosplay and I can inspect the pieces.',state:'cosplay'};
-   const progress=p.pieces?.length?Math.round(p.pieces.filter(x=>x.status==='Ready').length/p.pieces.length*100):Number(p.progress||0);
-   const needs=c.unfinishedPieces.slice(more?1:0,more?6:4).map(x=>x.name+(x.due?' due '+formatDate(x.due):''));
+   const pieces=c.cosplayPieces||[];
+   const unfinishedPieces=c.unfinishedPieces||[];
+   const topic=options.topic||'attention';
+   const byCategory=category=>pieces.filter(piece=>normalizeStatus(piece.category)===normalizeStatus(category));
+   const list=items=>items.slice(more?1:0,more?6:4).map(piece=>piece.name+(piece.due?' due '+formatDate(piece.due):'')).join(', ');
+   if(topic==='buy'){
+    const need=unfinishedPieces.filter(piece=>['buy','commission'].includes(normalizeStatus(piece.method)));
+    return {text:need.length?'You still need to buy or commission: '+list(need)+'.':'Nothing unfinished is marked Buy or Commission right now.',state:'cosplay'};
+   }
+   if(topic==='contacts'||topic==='shoes'){
+    const matches=byCategory(topic);
+    if(!matches.length)return {text:'No '+topic+' piece is listed for '+p.name+' yet.',state:'cosplay'};
+    const piece=matches[0];
+    const status=isReady(piece)?'ready':(piece.status||'not ready');
+    const purchase=[piece.ordered?'ordered':'not ordered',piece.arrived?'arrived':'not arrived'].join(', ');
+    return {text:piece.name+' is '+status+'.'+(normalizeStatus(piece.method)==='make'?'': ' '+purchase+'.'),state:'cosplay'};
+   }
+   if(topic==='repairs'){
+    const repairs=pieces.filter(piece=>{const state=normalizeStatus(piece.repairStatus);return state&&state!=='none'&&state!=='repaired'});
+    return {text:repairs.length?'Repair check: '+list(repairs)+'.':'No pieces are marked as needing repair.',state:'cosplay'};
+   }
+   if(topic==='packed'){
+    const notPacked=pieces.filter(piece=>!piece.packed);
+    return {text:notPacked.length?'Not packed yet: '+list(notPacked)+'.':'Everything listed is packed. Ready and packed are tracked separately.',state:'cosplay'};
+   }
+   if(topic==='next'){
+    const next=c.cosplayNextPiece;
+    return {text:next?'Next attention piece: '+next.name+(next.due?' due '+formatDate(next.due):'.'):'All listed pieces are ready.',state:'cosplay'};
+   }
+   const progress=Number(c.cosplayProgress||0);
+   const needs=unfinishedPieces.slice(more?1:0,more?6:4);
    const target=p.targetEvent?(p.targetEvent+(p.targetDate?' on '+formatDate(p.targetDate):'')):'No event target set';
-   return {text:(tone==='Gentle'?'Your active cosplay is ':'Yare yare. ')+p.name+' is '+progress+'% ready for '+target+'. '+(needs.length?'Needs attention: '+needs.join(', ')+'.':'All listed pieces are ready.'),state:'cosplay'};
+   const lead=tone==='Gentle'?'Your active cosplay is ':tone==='Bratty'?'Yare yare. ':'';
+   return {text:lead+p.name+' is '+progress+'% ready for '+target+'. '+(needs.length?'Needs attention: '+list(needs)+'.':'All listed pieces are ready.'),state:'cosplay'};
   }
   case 'convention_status':{
    const con=c.nearestConvention;
