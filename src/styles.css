@@ -210,3 +210,53 @@
  .routine-filter-row{align-items:stretch}
  .routine-filter-row .primary{width:100%}
 }
+
+/* Travel parity */
+.travel-tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;scrollbar-width:none}
+.travel-tabs::-webkit-scrollbar{display:none}
+.travel-tabs button{flex:0 0 auto;min-height:44px}
+.travel-detail-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.travel-detail-header h1{overflow-wrap:anywhere}
+.travel-detail-header .card-actions{flex-wrap:wrap;justify-content:flex-end}
+.travel-trip-card{display:grid;gap:12px}
+.travel-trip-card h2{margin:0 0 6px;overflow-wrap:anywhere}
+.travel-editor{border:2px solid #f5b4d7}
+.flight-hero{background:linear-gradient(145deg,#fff0f8,#fff);border:2px solid var(--pink);box-shadow:0 12px 28px rgba(244,91,178,.18)}
+.flight-hero h2{font-size:1.35rem;margin:6px 0}
+.flight-hero>strong{display:block;font:700 1.4rem Fredoka,sans-serif;color:var(--pink-deep);overflow-wrap:anywhere}
+.flight-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.flight-meta span{padding:9px;border-radius:12px;background:#fff0f8;min-width:0;overflow-wrap:anywhere}
+.flight-meta b{color:var(--pink-deep)}
+.travel-day-card{border:2px solid #f5b4d7;background:#fff0f8}
+.travel-readiness-grid,.travel-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.travel-readiness-grid span{padding:10px;border-radius:12px;background:#fff}
+.travel-readiness-grid b{color:var(--pink-deep);overflow-wrap:anywhere}
+.travel-summary-grid .card{margin:0}
+.travel-agenda{display:grid;gap:8px;margin-top:10px}
+.travel-agenda>div{padding:9px 10px;border-left:3px solid var(--pink);background:#fff;border-radius:10px}
+.travel-agenda small{display:block;color:var(--muted);overflow-wrap:anywhere}
+.travel-emergency{padding:10px;border-radius:12px;background:#fff;border:1px solid #f5b4d7;overflow-wrap:anywhere}
+.weather-card{background:#fffafc}
+.weather-card a,.travel-confirmation-row strong{overflow-wrap:anywhere;word-break:break-word}
+.travel-pack-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.travel-pack-head h2{margin:0}
+.travel-packing-filters{overflow-x:auto;flex-wrap:nowrap;padding-bottom:5px;scrollbar-width:none}
+.travel-packing-filters::-webkit-scrollbar{display:none}
+.travel-child-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-top:1px solid #f4d9e8;min-width:0}
+.travel-child-row:first-of-type{border-top:0}
+.travel-child-row>input{width:21px;height:21px;accent-color:var(--pink);flex:0 0 auto}
+.travel-child-copy{display:grid;gap:4px;min-width:0;flex:1}
+.travel-child-copy b,.travel-child-copy small{overflow-wrap:anywhere}
+.travel-child-copy small{color:var(--muted)}
+.travel-child-row .card-actions{display:flex;gap:5px;flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end}
+.travel-confirmation-row{display:grid;gap:3px;padding:10px 0;border-top:1px solid #f4d9e8;min-width:0}
+.travel-confirmation-row:first-of-type{border-top:0}
+.travel-confirmation-row strong{color:var(--pink-deep)}
+@media(max-width:380px){
+ .travel-detail-header{display:block}
+ .travel-detail-header .card-actions{justify-content:flex-start;margin-top:10px}
+ .flight-meta{grid-template-columns:1fr}
+ .travel-child-row{flex-wrap:wrap}
+ .travel-child-row .card-actions{width:100%;justify-content:flex-start}
+ .travel-summary-grid{grid-template-columns:1fr}
+}
