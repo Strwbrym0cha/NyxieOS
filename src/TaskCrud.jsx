@@ -10,7 +10,7 @@ const monthGrid=(monthStart)=>{const first=parseLocalDate(monthStart);const offs
 
 function TaskCard({task,onToggle,onEdit,onDelete,onSkip,canSkip}){
  return <div className={'plan-task-row '+(task.urgent?'urgent-task':'')}>
-  <input aria-label={'Complete '+task.title} type="checkbox" checked={Boolean(task.done)} onChange={onToggle}/>
+  <input aria-label={'Complete '+task.title} type="checkbox" checked={Boolean(task.done||task.completed)} onChange={onToggle}/>
   <div className="task-copy"><b>{task.title}</b><small>{taskTimeLabel(task)}{task.urgent?' · Urgent':''}</small></div>
   <div className="card-actions"><button type="button" className="edit-action tiny-action" onClick={onEdit}>Edit</button>{canSkip&&<button type="button" className="secondary tiny-action" onClick={onSkip}>Skip / Move</button>}<button type="button" className="delete-action tiny-action" onClick={onDelete}>Delete</button></div>
  </div>;
@@ -29,7 +29,7 @@ function SkipPanel({task,note,setNote,onMove,onLeave,onCancel}){
 export default function TaskCrud({data,setData}){
  const tasks=data.tasks||[],today=localDate(),[view,setView]=useState('today'),[selectedDate,setSelectedDate]=useState(today),[monthCursor,setMonthCursor]=useState(today.slice(0,7)+'-01'),[edit,setEdit]=useState(null),[skipTask,setSkipTask]=useState(null),[skipNote,setSkipNote]=useState('');
  const save=next=>setData({...data,tasks:next});
- const toggle=task=>save(tasks.map(item=>item.id===task.id?{...item,done:!item.done}:item));
+ const toggle=task=>{const nextDone=!Boolean(task.done||task.completed);save(tasks.map(item=>item.id===task.id?{...item,done:nextDone,completed:false}:item))};
  const remove=task=>{if(window.confirm('Delete this task?'))save(tasks.filter(item=>item.id!==task.id))};
  const beginEdit=task=>setEdit({...task,time:task.time||''});
  const submit=event=>{event.preventDefault();const next={...edit,id:edit.id||Date.now(),date:edit.date||selectedDate,time:String(edit.time||'').trim()||null,urgent:Boolean(edit.urgent),done:Boolean(edit.done)};save(edit.id?tasks.map(item=>item.id===next.id?next:item):[...tasks,next]);setEdit(null)};
