@@ -28,6 +28,20 @@ export function generateReply(intent,data,settings={},options={}){
    return {text:pick(['Yare yare. I am awake. What shall we check?','Hello, Nyxie. Pick a planner problem and I shall judge it gently.','Hey. Tasks, money, cosplay, or something else?'],seed),state:'normal'};
   case 'today_tasks':
    return {text:renderToday(c,tone,more,seed),state:c.incompleteToday.length>3?'nagging':'normal'};
+  case 'reminder_status':{
+   const buckets=c.reminderBuckets||{today:[],upcoming:[],overdue:[],importantToday:[]};
+   const topic=options.topic||'today';
+   const rows=topic==='overdue'?buckets.overdue:topic==='important'?buckets.importantToday:topic==='upcoming'?buckets.upcoming:buckets.today;
+   const label=topic==='overdue'?'overdue':topic==='upcoming'?'coming up':topic==='important'?'important today':'to remember today';
+   if(!rows.length){
+    const empty=topic==='overdue'?'Nothing is overdue right now.':topic==='upcoming'?'Nothing is coming up yet.':topic==='important'?'Nothing marked important is due today.':'Nothing needs remembering today.';
+    return {text:tone==='Bratty'?'Yare yare. '+empty+' Suspiciously peaceful.':empty+' Your planner is pleasantly quiet.',state:'normal'};
+   }
+   const shown=rows.slice(0,more?6:4).map(item=>(item.time?item.time+' ':'')+item.title+' · '+(item.sourceType||'planner'));
+   const suffix=rows.length>shown.length?' and '+(rows.length-shown.length)+' more':'.';
+   const lead=tone==='Gentle'?'Here is what is ':tone==='Bratty'?'Yare yare. Here is what is ':'Here is what is ';
+   return {text:lead+label+': '+shown.join(', ')+suffix,state:topic==='overdue'?'nagging':'normal'};
+  }
   case 'upcoming':{
    const parts=[];
    if(c.nearestConvention)parts.push(c.nearestConvention.name+' in '+(daysUntil(c.nearestConvention.startDate)??0)+' days');
