@@ -179,8 +179,29 @@ export function generateReply(intent,data,settings={},options={}){
    return {text:'Creator HQ: '+(stages['To Film']||0)+' to film, '+(stages.Editing||0)+' editing, '+(stages.Ready||0)+' ready.'+(attention.length?' '+attention[0].title+' is next on the board.':'')+due,state:'normal'};
   }
   case 'routine_status':{
-   if(!c.routineSummaries.length)return {text:'No routines are set up yet.',state:'normal'};
-   const summary=c.routineSummaries.map(x=>x.routine.name+' '+x.done+'/'+x.total+(x.skipped?' skipped today':'')).join(' · ');
+   const summaries=Array.isArray(c.routineSummaries)?c.routineSummaries:[];
+   const topic=options.topic||'today';
+   if(topic==='tomorrow'){
+    const tomorrow=Array.isArray(c.tomorrowRoutineSummaries)?c.tomorrowRoutineSummaries:[];
+    return {text:tomorrow.length?'Tomorrow: '+tomorrow.map(item=>item.routine.name+' '+item.completed+'/'+item.total).join(' · ')+'.':'No routine is scheduled for tomorrow yet. A carry-forward can make one appear once.',state:'normal'};
+   }
+   if(topic==='tiny'){
+    const tiny=summaries.flatMap(item=>(item.lowEnergySteps||[]).map(step=>step.text)).filter(Boolean);
+    return {text:tiny.length?'Tiny version: '+tiny.join(', ')+'.':'No tiny version is set for today yet. Show the full routine when you are ready.',state:'sleepy'};
+   }
+   if(!summaries.length)return {text:'No routines apply today. The quiet days count too.',state:'normal'};
+   if(topic==='remaining'){
+    const remaining=summaries.filter(item=>item.remaining>0);
+    return {text:remaining.length?'Still left: '+remaining.map(item=>item.routine.name+' ('+item.remaining+' step'+(item.remaining===1?'':'s')+')').join(' · ')+'.':'All applicable routine steps are complete today.',state:'normal'};
+   }
+   if(topic==='progress'){
+    return {text:'Routine progress: '+summaries.map(item=>item.routine.name+' '+item.completed+'/'+item.total+' ('+item.percentage+'%)').join(' · ')+'.',state:'normal'};
+   }
+   if(topic==='skipped'){
+    const skipped=summaries.filter(item=>item.skipped);
+    return {text:skipped.length?'Skipped today: '+skipped.map(item=>item.routine.name).join(', ')+'.':'No applicable routines are marked skipped today.',state:'normal'};
+   }
+   const summary=summaries.map(item=>item.routine.name+' '+item.completed+'/'+item.total+(item.skipped?' skipped today':'')).join(' · ');
    return {text:tone==='Gentle'?'Today’s rituals: '+summary+'.':tone==='Bratty'?'Yare yare. Ritual report: '+summary+'.':'Routines today: '+summary+'.',state:'normal'};
   }
   case 'wellness_status':{
