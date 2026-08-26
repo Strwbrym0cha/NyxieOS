@@ -67,7 +67,7 @@ function TemplateForm({value,onChange,onSave,onCancel}){
 
 function ChildRow({kind,item,onEdit,onDelete,onToggle}){
   const label=item.title||item.name||item.airline||item.label||item.type||'Item';
-  const detail=kind==='flight'?[item.from,item.to,item.departureDate,item.departureTime].filter(Boolean).join(' · '):kind==='packing'?(item.category||'Other'):(item.date||item.checkInDate||item.location||item.value||'');
+  const detail=(kind==='flight'||kind==='flights')?[item.from,item.to,item.departureDate,item.departureTime].filter(Boolean).join(' · '):kind==='packing'?(item.category||'Other'):(item.date||item.checkInDate||item.location||item.value||'');
   const checkKey=kind==='packing'?'packed':kind==='postTripReset'?'done':null;
   return <div className="travel-child-row">{checkKey&&<input aria-label={'Toggle '+label} type="checkbox" checked={Boolean(item[checkKey])} onChange={()=>onToggle?.(item,checkKey)}/>}<div className="travel-child-copy"><b>{label}</b><small>{detail}</small></div><div className="card-actions"><button className="edit-action" type="button" onClick={()=>onEdit(item)}>Edit</button><button className="delete-action" type="button" onClick={()=>onDelete(item)}>Delete</button></div></div>;
 }
