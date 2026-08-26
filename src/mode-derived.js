@@ -1,9 +1,9 @@
 import {getApplicableWorkWindows,getLoggedGigProfit,getTodayMoneyTargetSummary,getWeeklyMissionSummary,normalizeMoneyRoot} from './money-derived.js';
 import {getActiveConvention,getConventionContentSummary,getConventionEssentials,getLinkedCosplays,getLinkedTrip,getPrepSuggestions,getUpcomingConventions,normalizeConventionStatus} from './convention-derived.js';
-import {getTravelSummary,isTripDay,localTravelDate} from './travel-derived.js';
+import {getTravelSummary,isTripDay} from './travel-derived.js';
 import {getWellnessDay,getWellnessHomeSummary} from './wellness-derived.js';
-import {getApplicableRoutines,getRoutineTodaySummary,localRoutineDate} from './routine-derived.js';
-import {getReminderBuckets,localReminderDate} from './reminder-derived.js';
+import {getApplicableRoutines,getRoutineTodaySummary} from './routine-derived.js';
+import {getReminderBuckets} from './reminder-derived.js';
 import {getDailyCreatorFocus,getItemsByStage,normalizeCreatorRoot} from './creator-derived.js';
 
 export const MODE_OPTIONS=[
@@ -35,11 +35,11 @@ const conventionIsToday=(convention,date)=>{
 };
 const hasMeaningfulPrep=convention=>{
  if(!convention)return false;
- const prep=getPrepSuggestions(convention);
  const checklist=asArray(convention.checklist).some(item=>!item?.done);
  const packing=asArray(convention.packing).some(item=>!item?.packed&&!item?.done);
  const content=Number(convention.content?.target||0)>Number(convention.content?.done||0);
- return Boolean(prep.suggestions?.length||checklist||packing||content||convention.linkedCosplayIds?.length||convention.cosplayIds?.length);
+ const linked=convention.linkedCosplayIds?.length||convention.cosplayIds?.length||convention.badge||convention.travelPlan||convention.linkedTripId;
+ return Boolean(checklist||packing||content||linked);
 };
 
 export function getSuggestedMode(data={},date=localModeDate()){
