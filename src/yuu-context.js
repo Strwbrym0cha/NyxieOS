@@ -1,5 +1,6 @@
 import {getPlannedNeeds} from './money-derived.js';
 import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
+import {getWellnessDay,getWellnessHomeSummary,getWeeklyWellnessSummary} from './wellness-derived.js';
 import {getConventionContentSummary,getConventionEssentials,getPrepSuggestions,getTodayPhotoshoots,getTodaySchedule,getUpcomingConventions,getLinkedCosplays} from './convention-derived.js';
 const DAY_NAMES=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
@@ -78,7 +79,9 @@ export function getPlannerContext(data={},date=localDate()){
    const done=steps.reduce((count,step,index)=>count+(completion[index]||completion[step?.id]||false?1:0),0);
    return {routine,done,total:steps.length,skipped:Boolean(routine.skipped?.[date]),remaining:Math.max(0,steps.length-done)};
  });
- const wellness=data.wellness?.[date]||null;
+ const wellness=getWellnessDay(data.wellness,date);
+ const wellnessSummary=getWellnessHomeSummary(data.wellness,date);
+ const weeklyWellness=getWeeklyWellnessSummary(data.wellness,date);
  return {
    date,tasks,todayTasks,incompleteToday,timedToday,urgentToday,tomorrowTasks,overdueTasks,
    money:{...money,remaining,workWindows,upcomingMoney,plannedNeeds},
@@ -86,6 +89,6 @@ export function getPlannerContext(data={},date=localDate()){
    nearestConvention,upcomingConventions,conventionPrep,conventionSuggestions,conventionSchedule,conventionPhotoshoots,conventionEssentials,conventionContent,
    nextTrip,nextFlight,stays,transport,tripPacking,
    creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,
-   routines,routineSummaries,wellness
+   routines,routineSummaries,wellness,wellnessSummary,weeklyWellness
  };
 }
