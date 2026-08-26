@@ -7,6 +7,7 @@ import {getUpcomingConventions} from './convention-derived.js';
 import {getWellnessHomeSummary} from './wellness-derived.js';
 import ModePicker from './ModePicker.jsx';
 import {getEffectiveMode,getModeHomeFocus} from './mode-derived.js';
+import YuuSprite from './YuuSprite.jsx';
 
 const Card=({children,className=''})=><section className={'card '+className}>{children}</section>;
 const money=value=>String.fromCharCode(36)+toMoneyNumber(value).toFixed(2);
@@ -59,7 +60,7 @@ export default function HomeCommand({data,setData,setScreen}){
  return <><header className="home-header"><div><small>{dateText(today)}</small><h1>{greeting}, {displayName} ✨</h1></div></header>
   <ModePicker data={data} setData={setData} date={today}/>
   <ModeFocus mode={mode} focus={modeFocus} setScreen={setScreen} onShowFull={()=>setShowFullHome(true)}/>
-  <button type="button" className="yuu yuu-button" onClick={()=>setScreen('yuu')}><div className="yuu-avatar">Y</div><div><b>Yuu-Kun</b><p>Yare yare. {incompleteCount} things need you today.</p></div></button>
+  <button type="button" className="yuu yuu-button" onClick={()=>setScreen('yuu')}><YuuSprite state={mode==='low-energy'?'sleepy':mode==='work-money'?'money':mode==='creator'?'proud':mode==='con-prep'||mode==='con-day'?'cosplay':'normal'} size="sm" /><div><b>Yuu-Kun</b><p>Yare yare. {incompleteCount} things need you today.</p></div></button>
   {mode==='low-energy'&&!showFullHome?null:<>
   <Section title="Today"/>
   <Card className="home-today-card"><div className="section-title-row"><b>{incompleteCount?incompleteCount+' tasks waiting':'Nothing urgent waiting'}</b><small>{dateText(today)}</small></div>{preview.length?preview.map(task=><HomeTaskRow key={task.id} task={task} onToggle={()=>toggleTask(task)}/>):<p className="plan-empty">Your list is clear today ✨</p>}{incompleteCount>preview.length&&<small className="more-tasks">+{incompleteCount-preview.length} more</small>}<button type="button" className="primary" onClick={()=>setScreen('plan')}>Open Plan</button></Card>
