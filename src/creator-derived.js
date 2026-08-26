@@ -80,7 +80,7 @@ export function getCreatorItemsForDate(input, date) {
   return Array.from(new Map(entries.map(entry => [entry.itemId, entry.item])).values());
 }
 export function getUpcomingCreatorDeadlines(input, today = localDate()) {
-  return itemList(input).flatMap(item => ['shootDate','editDate','uploadDeadline'].map(field => ({item,field,date:dateFor(item[field])})).filter(entry => entry.date && entry.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
+  return itemList(input).flatMap(item => ['shootDate','editDate','uploadDeadline'].map(field => ({item,field,date:dateFor(item[field])})).filter(entry => entry.date && entry.date >= today).sort((a,b)=>a.date.localeCompare(b.date)));
 }
 export function getCreatorReminderItems(input, today = localDate()) {
   return itemList(input).filter(item => item.reminderAt && !item.reminderDismissed).map(item => ({item,date:dateFor(String(item.reminderAt).slice(0,10))})).filter(entry => entry.date).sort((a,b)=>a.date.localeCompare(b.date));
