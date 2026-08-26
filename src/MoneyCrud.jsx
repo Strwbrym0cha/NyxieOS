@@ -45,7 +45,7 @@ function PlannedNeeds({data,setScreen}){
 }
 
 function WorkWindows({root,saveMoney,setWindowEdit}){
- const windows=root.workWindows;
+ const windows=getApplicableWorkWindows(root,today());
  const changeCheckin=(window,status)=>{
    const date=today();const checkins={...(root.workWindowCheckins||{})};const day={...(checkins[date]||{})};
    const existing=day[String(window.id)]||{};let note='';
