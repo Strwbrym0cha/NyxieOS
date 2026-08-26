@@ -114,10 +114,12 @@ export function getRoutineTodaySummary(routine,date=localRoutineDate()){
   const item=normalizeRoutine(routine);
   const progress=getRoutineProgress(item,date);
   const lowEnergySteps=getRoutineLowEnergySteps(item);
+  const remainingSteps=getRoutineRemainingSteps(item,date);
   return {
     routine:item,
     ...progress,
-    remaining:getRoutineRemainingSteps(item,date),
+    remaining:remainingSteps.length,
+    remainingSteps,
     skipped:Boolean(item.skipped?.[localRoutineDate(date)]),
     skipNote:item.skipNotes?.[localRoutineDate(date)]||'',
     carriedForward:Boolean(item.carryForward?.[localRoutineDate(date)]),
