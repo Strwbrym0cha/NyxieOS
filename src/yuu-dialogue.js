@@ -94,7 +94,8 @@ export function generateReply(intent,data,settings={},options={}){
    }
    const fact=money(m.availableToday)+' available today, '+money(m.earnedToday)+' earned today. Weekly mission: '+money(m.weeklyEarned)+' of '+money(m.weeklyGoal)+' earned, '+money(m.remaining)+' remaining, '+m.daysRemaining+' days left. Suggested pace: '+money(m.mission?.suggestedPerDay||0)+' per remaining day.';
    const plannedLine=planned.total?' Planned needs: '+money(planned.total)+'.':'';
-   return {text:tone==='Gentle'?'You have '+fact+plannedLine:tone==='Bratty'?'Yare yare. '+fact+plannedLine+' Keep the treasure quest moving.':'Here is the money snapshot: '+fact+plannedLine,state:'money'};
+   const modeLead=activeMode==='work-money'?'Work Money focus: ':'';
+   return {text:modeLead+(tone==='Gentle'?'You have ':tone==='Bratty'?'Yare yare. ':'Here is the money snapshot: ')+fact+plannedLine,state:'money'};
   }
   case 'cosplay_status':{
    const p=c.activeCosplay;
@@ -155,7 +156,7 @@ export function generateReply(intent,data,settings={},options={}){
     return {text:content.target?content.done+' / '+content.target+' content complete, '+content.remaining+' left.':'No convention content target is set yet.',state:'normal'};
    }
    const prep=c.conventionPrep||[];const done=prep.filter(item=>item.done||item.packed).length;
-   return {text:con.name+' is in '+(daysUntil(con.startDate)??0)+' days. Prep is '+done+' of '+prep.length+' custom items complete.'+(con.location?' Location: '+con.location+'.':''),state:'normal'};
+   return {text:(activeMode==='con-day'?'Con Day focus: ':'')+con.name+' is in '+(daysUntil(con.startDate)??0)+' days. Prep is '+done+' of '+prep.length+' custom items complete.'+(con.location?' Location: '+con.location+'.':''),state:'normal'};
   }
   case 'travel_status':{
    const trip=c.nextTrip;
@@ -168,7 +169,7 @@ export function generateReply(intent,data,settings={},options={}){
    const agenda=(c.travelAgenda||[]).slice(0,2);
    const agendaText=agenda.length?' Today: '+agenda.map(item=>(item.time?item.time+' ':'')+(item.title||'trip item')).join(', ')+'.':'';
    const confirmationText=c.travelConfirmations?.length?' '+c.travelConfirmations.length+' confirmation reference'+(c.travelConfirmations.length===1?'':'s')+' saved.':'';
-   return {text:'Your next trip is '+(trip.destination||trip.name||'saved')+(trip.startDate?' from '+formatDate(trip.startDate):'')+'.'+flightText+stayText+agendaText+pack+confirmationText,state:'normal'};
+   return {text:(activeMode==='travel'?'Travel focus: ':'Your next trip is ')+(activeMode==='travel'?'':(trip.destination||trip.name||'saved')+(trip.startDate?' from '+formatDate(trip.startDate):'')+'.')+flightText+stayText+agendaText+pack+confirmationText,state:'normal'};
   }
   case 'creator_status':{
    const stages=c.stageCounts||{};
@@ -203,7 +204,7 @@ export function generateReply(intent,data,settings={},options={}){
    }
    const attention=items.filter(item=>item.stage!=='Posted'&&(item.reminderAt||item.uploadDeadline||item.shootDate));
    const due=c.overdueContent?.length?' '+c.overdueContent.length+' overdue item'+(c.overdueContent.length===1?'':'s')+'.':'';
-   return {text:'Creator HQ: '+(stages['To Film']||0)+' to film, '+(stages.Editing||0)+' editing, '+(stages.Ready||0)+' ready.'+(attention.length?' '+attention[0].title+' is next on the board.':'')+due,state:'normal'};
+   return {text:(activeMode==='creator'?'Creator Day focus: ':'Creator HQ: ')+(stages['To Film']||0)+' to film, '+(stages.Editing||0)+' editing, '+(stages.Ready||0)+' ready.'+(attention.length?' '+attention[0].title+' is next on the board.':'')+due,state:'normal'};
   }
   case 'routine_status':{
    const summaries=Array.isArray(c.routineSummaries)?c.routineSummaries:[];
