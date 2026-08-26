@@ -93,9 +93,25 @@ export function generateReply(intent,data,settings={},options={}){
   case 'convention_status':{
    const con=c.nearestConvention;
    if(!con)return {text:'No upcoming convention is on the board yet.',state:'normal'};
-   const prep=c.conventionPrep;
-   const done=prep.filter(x=>x.done||x.packed).length;
-   return {text:' '+con.name+' is in '+(daysUntil(con.startDate)??0)+' days. Prep is '+done+' of '+prep.length+' checklist items complete.'+(con.location?' Location: '+con.location+'.':''),state:'normal'};
+   const topic=options.topic||'status';
+   if(topic==='next'){
+    const next=c.conventionSchedule?.find(item=>!item.done)||c.conventionPhotoshoots?.[0];
+    return {text:next?'Next at '+con.name+': '+(next.time?next.time+' ':'')+(next.title||next.name||'schedule item')+(next.location?' at '+next.location:'')+'.':'No more scheduled things today ✨',state:'normal'};
+   }
+   if(topic==='prep'){
+    const suggestions=c.conventionSuggestions?.suggestions||[];
+    return {text:suggestions.length?'Prep next: '+suggestions.slice(0,4).join(', ')+'.':'No prep guidance is queued yet.',state:'normal'};
+   }
+   if(topic==='photoshoots'){
+    const shoots=c.conventionPhotoshoots||[];
+    return {text:shoots.length?'Photoshoots today: '+shoots.map(item=>(item.time?item.time+' ':'')+(item.title||item.name)).join(', ')+'.':'No photoshoots are scheduled today.',state:'normal'};
+   }
+   if(topic==='content'){
+    const content=c.conventionContent||{done:0,target:0,remaining:0};
+    return {text:content.target?content.done+' / '+content.target+' content complete, '+content.remaining+' left.':'No convention content target is set yet.',state:'normal'};
+   }
+   const prep=c.conventionPrep||[];const done=prep.filter(item=>item.done||item.packed).length;
+   return {text:con.name+' is in '+(daysUntil(con.startDate)??0)+' days. Prep is '+done+' of '+prep.length+' custom items complete.'+(con.location?' Location: '+con.location+'.':''),state:'normal'};
   }
   case 'travel_status':{
    const trip=c.nextTrip;
