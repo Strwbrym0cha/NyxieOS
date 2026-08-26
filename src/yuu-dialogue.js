@@ -139,9 +139,14 @@ export function generateReply(intent,data,settings={},options={}){
    const trip=c.nextTrip;
    if(!trip)return {text:'No upcoming trip is saved yet.',state:'normal'};
    const flight=c.nextFlight;
-   const flightText=flight?' Next flight: '+(flight.airline||'Flight')+' '+(flight.flightNumber||'')+' '+(flight.departureAirport||flight.from||'')+' to '+(flight.arrivalAirport||flight.to||'')+'.':'';
+   const stay=c.travelSummary?.nextStay||c.stays?.[0];
+   const flightText=flight?' Next flight: '+(flight.airline||'Flight')+' '+(flight.flightNumber||'')+' '+(flight.from||flight.departureAirport||'')+' to '+(flight.to||flight.arrivalAirport||'')+(flight.departureDate?' on '+formatDate(flight.departureDate):'')+(flight.departureTime?' at '+flight.departureTime:'')+(flight.terminalGate?' · '+flight.terminalGate:'')+(flight.seat?' · seat '+flight.seat:'')+'.':'';
    const pack=trip.packing?.length?' Packing: '+trip.packing.filter(x=>x.packed).length+'/'+trip.packing.length+'.':'';
-   return {text:'Your next trip is '+(trip.destination||trip.name||'saved')+(trip.startDate?' from '+formatDate(trip.startDate):'')+'.'+flightText+pack,state:'normal'};
+   const stayText=stay?' Staying at '+(stay.name||'saved lodging')+(stay.address?' · '+stay.address:'')+'.':'';
+   const agenda=(c.travelAgenda||[]).slice(0,2);
+   const agendaText=agenda.length?' Today: '+agenda.map(item=>(item.time?item.time+' ':'')+(item.title||'trip item')).join(', ')+'.':'';
+   const confirmationText=c.travelConfirmations?.length?' '+c.travelConfirmations.length+' confirmation reference'+(c.travelConfirmations.length===1?'':'s')+' saved.':'';
+   return {text:'Your next trip is '+(trip.destination||trip.name||'saved')+(trip.startDate?' from '+formatDate(trip.startDate):'')+'.'+flightText+stayText+agendaText+pack+confirmationText,state:'normal'};
   }
   case 'creator_status':{
    const stages=c.stageCounts||{};
