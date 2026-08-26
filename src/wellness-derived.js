@@ -106,8 +106,8 @@ export function normalizeWellnessRoot(rawWellness) {
     settings: {
       ...settings,
       waterGoalOz: nonNegative(settings.waterGoalOz) || DEFAULT_GOAL,
-      showWeight: Boolean(settings.showWeight),
-      showMedication: Boolean(settings.showMedication),
+      showWeight: settings.showWeight === true || (settings.showWeight === undefined && Array.isArray(source.measurements) && source.measurements.length > 0),
+      showMedication: settings.showMedication === true || (settings.showMedication === undefined && Array.isArray(source.medications) && source.medications.length > 0),
       showAppointments: settings.showAppointments !== false
     },
     days,
