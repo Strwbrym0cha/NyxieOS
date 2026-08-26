@@ -49,7 +49,7 @@ function WorkWindows({root,saveMoney,setWindowEdit}){
  const changeCheckin=(window,status)=>{
    const date=today();const checkins={...(root.workWindowCheckins||{})};const day={...(checkins[date]||{})};
    const existing=day[String(window.id)]||{};let note='';
-   if(status==='skipped')note=window.prompt?.('What happened? (optional)')||'';
+   if(status==='skipped')note=globalThis.prompt?.('What happened? (optional)')||'';
    day[String(window.id)]={...existing,status,...(status==='started'?{startedAt:timeNow()}:{note})};
    saveMoney({workWindowCheckins:{...checkins,[date]:day}});
  };
