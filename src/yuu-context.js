@@ -1,6 +1,7 @@
 import {getPlannedNeeds} from './money-derived.js';
 import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
 import {getWellnessDay,getWellnessHomeSummary,getWeeklyWellnessSummary} from './wellness-derived.js';
+import {normalizeCreatorRoot,getUpcomingCreatorDeadlines,getCreatorReminderItems,getConventionCreatorSummary,getDailyCreatorFocus,getLinkedCollaborators} from './creator-derived.js';
 import {getConventionContentSummary,getConventionEssentials,getPrepSuggestions,getTodayPhotoshoots,getTodaySchedule,getUpcomingConventions,getLinkedCosplays} from './convention-derived.js';
 const DAY_NAMES=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
@@ -67,11 +68,17 @@ export function getPlannerContext(data={},date=localDate()){
  const stays=nextTrip?.stays||[];
  const transport=nextTrip?.transport||nextTrip?.groundTransport||[];
  const tripPacking=nextTrip?.packing||[];
- const creatorItems=data.creator?.items||[];
- const nextShoot=sortedBy(creatorItems,'shootDate').find(item=>item.stage!=='Posted')||null;
- const nextUpload=sortedBy(creatorItems,'uploadDeadline').find(item=>item.stage!=='Posted')||null;
- const overdueContent=creatorItems.filter(item=>item.stage!=='Posted'&&((item.shootDate&&item.shootDate<date)||(item.uploadDeadline&&item.uploadDeadline<date)));
+ const creatorRoot=normalizeCreatorRoot(data.creator);
+ const creatorItems=creatorRoot.items;
+ const creatorDeadlines=getUpcomingCreatorDeadlines(creatorRoot,date);
+ const nextShoot=creatorDeadlines.find(entry=>entry.field==='shootDate'&&entry.item.stage!=='Posted')?.item||null;
+ const nextUpload=creatorDeadlines.find(entry=>entry.field==='uploadDeadline'&&entry.item.stage!=='Posted')?.item||null;
+ const overdueContent=creatorItems.filter(item=>item.stage!=='Posted'&&((item.shootDate&&item.shootDate<date)||(item.uploadDeadline&&item.uploadDeadline<date)||(item.reminderAt&&item.reminderAt.slice(0,10)<date)));
  const stageCounts=['Ideas','To Film','Editing','Ready','Posted'].reduce((all,stage)=>{all[stage]=creatorItems.filter(item=>item.stage===stage).length;return all}, {});
+ const creatorFocus=getDailyCreatorFocus(creatorRoot,date);
+ const creatorReminders=getCreatorReminderItems(creatorRoot,date);
+ const creatorConventionSummary=getConventionCreatorSummary(creatorRoot,nearestConvention);
+ const creatorCollaborators=creatorRoot.collaborators;
  const routines=data.routines||[];
  const routineSummaries=routines.map(routine=>{
    const steps=routine.steps||[];
@@ -88,7 +95,7 @@ export function getPlannerContext(data={},date=localDate()){
    activeCosplay,cosplayPieces,unfinishedPieces,overduePieces,dueSoonPieces,cosplayProgress,cosplayNextPiece,cosplayPackedCount,cosplayPrimaryReference,
    nearestConvention,upcomingConventions,conventionPrep,conventionSuggestions,conventionSchedule,conventionPhotoshoots,conventionEssentials,conventionContent,
    nextTrip,nextFlight,stays,transport,tripPacking,
-   creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,
+   creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,creatorRoot,creatorFocus,creatorReminders,creatorConventionSummary,creatorCollaborators,creatorDeadlines,
    routines,routineSummaries,wellness,wellnessSummary,weeklyWellness
  };
 }
