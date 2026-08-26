@@ -1,5 +1,6 @@
 import {getPlannedNeeds} from './money-derived.js';
 import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
+import {getConventionContentSummary,getConventionEssentials,getPrepSuggestions,getTodayPhotoshoots,getTodaySchedule,getUpcomingConventions,getLinkedCosplays} from './convention-derived.js';
 const DAY_NAMES=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 export const localDate=(value=new Date())=>{
@@ -49,12 +50,15 @@ export function getPlannerContext(data={},date=localDate()){
  const cosplayPackedCount=getPackedCount(activeCosplay);
  const cosplayPrimaryReference=getPrimaryReference(activeCosplay);
  const conventions=data.conventions?.items||[];
- const upcomingConventions=conventions.filter(item=>item.startDate&&item.startDate>=date&&item.status!=='Completed').sort((a,b)=>a.startDate.localeCompare(b.startDate));
+ const upcomingConventions=getUpcomingConventions(conventions,date);
  const nearestConvention=upcomingConventions[0]||null;
- const conventionPrep=nearestConvention?[
-   ...(nearestConvention.checklist||[]),
-   ...(nearestConvention.packing||[])
- ]: [];
+ const conventionPrep=nearestConvention?[...(nearestConvention.checklist||[]),...(nearestConvention.packing||[])]:[];
+ const conventionSuggestions=nearestConvention?getPrepSuggestions(nearestConvention):null;
+ const conventionSchedule=nearestConvention?getTodaySchedule(nearestConvention,date):[];
+ const conventionPhotoshoots=nearestConvention?getTodayPhotoshoots(nearestConvention,date):[];
+ const conventionCosplays=nearestConvention?getLinkedCosplays(nearestConvention,data.cosplay?.projects||[]):[];
+ const conventionEssentials=nearestConvention?getConventionEssentials(nearestConvention,conventionCosplays):[];
+ const conventionContent=nearestConvention?getConventionContentSummary(nearestConvention,data.creator?.items||[]):null;
  const trips=data.travel?.trips||[];
  const nextTrip=trips.find(trip=>trip.status==='Traveling')||trips.filter(trip=>trip.startDate&&trip.startDate>=date).sort((a,b)=>a.startDate.localeCompare(b.startDate))[0]||null;
  const flights=(nextTrip?.flights||[]).slice().sort((a,b)=>String(a.departureDate||a.date||'9999').localeCompare(String(b.departureDate||b.date||'9999')));
@@ -79,7 +83,7 @@ export function getPlannerContext(data={},date=localDate()){
    date,tasks,todayTasks,incompleteToday,timedToday,urgentToday,tomorrowTasks,overdueTasks,
    money:{...money,remaining,workWindows,upcomingMoney,plannedNeeds},
    activeCosplay,cosplayPieces,unfinishedPieces,overduePieces,dueSoonPieces,cosplayProgress,cosplayNextPiece,cosplayPackedCount,cosplayPrimaryReference,
-   nearestConvention,upcomingConventions,conventionPrep,
+   nearestConvention,upcomingConventions,conventionPrep,conventionSuggestions,conventionSchedule,conventionPhotoshoots,conventionEssentials,conventionContent,
    nextTrip,nextFlight,stays,transport,tripPacking,
    creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,
    routines,routineSummaries,wellness
