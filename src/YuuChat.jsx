@@ -37,7 +37,7 @@ export default function YuuChat({data,setData,setScreen}){
    let options={seed:history.length,topic:parsed.topic,subject:parsed.subject};
    if(parsed.intent==='follow_up'){
      const prior=parsed.lastIntent||data.yuu?.lastIntent;
-     const canContinue=['today_tasks','upcoming','reminder_status','money_status','cosplay_status','convention_status','travel_status','creator_status','routine_status','wellness_status','work_status'].includes(prior);
+     const canContinue=['today_tasks','upcoming','mode_status','reminder_status','money_status','cosplay_status','convention_status','travel_status','creator_status','routine_status','wellness_status','work_status'].includes(prior);
      if(!canContinue){
        saveMessages(text,{text:'Tell me which planner area you want to continue with: tasks, money, cosplay, conventions, travel, content, routines, work, or wellness.',state:'normal'},'unknown');
        return;
