@@ -184,7 +184,7 @@ export function applyMoneyTransaction(money={},tx,direction=1,date=localDate()){
    const bucket=transactionBucket(tx);
    if(bucket)buckets[bucket]=(finiteNumber(buckets[bucket])-amount);
  }
- return {...root,availableToday,weeklyEarned,earnedToday,buckets};
+ return {...root,availableToday:available,weeklyEarned,earnedToday,buckets};
 }
 
 export function getTransactionBucket(tx){return transactionBucket(tx);}
