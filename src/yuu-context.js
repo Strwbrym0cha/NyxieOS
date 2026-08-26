@@ -5,6 +5,7 @@ import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,
 import {getWellnessDay,getWellnessHomeSummary,getWeeklyWellnessSummary} from './wellness-derived.js';
 import {normalizeCreatorRoot,getUpcomingCreatorDeadlines,getCreatorReminderItems,getConventionCreatorSummary,getDailyCreatorFocus,getLinkedCollaborators} from './creator-derived.js';
 import {getConventionContentSummary,getConventionEssentials,getPrepSuggestions,getTodayPhotoshoots,getTodaySchedule,getUpcomingConventions,getLinkedCosplays} from './convention-derived.js';
+import {getReminderBuckets} from './reminder-derived.js';
 
 export const localDate=(value=new Date())=>{
  const date=value instanceof Date?value:new Date(value);
@@ -80,6 +81,7 @@ export function getPlannerContext(data={},date=localDate()){
  const wellness=getWellnessDay(data.wellness,date);
  const wellnessSummary=getWellnessHomeSummary(data.wellness,date);
  const weeklyWellness=getWeeklyWellnessSummary(data.wellness,date);
+ const reminderBuckets=getReminderBuckets(data,date);
  return {
    date,tasks,todayTasks,incompleteToday,timedToday,urgentToday,tomorrowTasks,overdueTasks,
    money:{...money,remaining,mission,targetSummary,workWindows,upcomingMoney,obligations,gigProfit,plannedNeeds,savingsGoals:money.savingsGoals,debts:money.debts,purchases:money.purchases},
@@ -87,6 +89,6 @@ export function getPlannerContext(data={},date=localDate()){
    nearestConvention,upcomingConventions,conventionPrep,conventionSuggestions,conventionSchedule,conventionPhotoshoots,conventionEssentials,conventionContent,
    nextTrip,nextFlight,stays,transport,tripPacking,travelConfirmations,travelAgenda,travelSummary,
    creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,creatorRoot,creatorFocus,creatorReminders,creatorConventionSummary,creatorCollaborators,creatorDeadlines,
-   routines,routineSummaries,tomorrowRoutineSummaries,wellness,wellnessSummary,weeklyWellness
+   routines,routineSummaries,tomorrowRoutineSummaries,wellness,wellnessSummary,weeklyWellness,reminderBuckets
  };
 }
