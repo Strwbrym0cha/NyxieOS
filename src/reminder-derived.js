@@ -4,7 +4,7 @@ import {getUpcomingConventions} from './convention-derived.js';
 import {getUpcomingCreatorDeadlines} from './creator-derived.js';
 import {getTravelSummary,localTravelDate} from './travel-derived.js';
 
-const DATE_RE=/^\\d{4}-\\d{2}-\\d{2}$/;
+const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS=86400000;
 const asArray=value=>Array.isArray(value)?value:[];
 const asObject=value=>value&&typeof value==='object'?value:{};
