@@ -1,4 +1,4 @@
-import {getApplicableWorkWindows,getLoggedGigProfit,getPlannedNeeds,getTodayMoneyTargetSummary,getWeeklyMissionSummary,normalizeMoneyRoot,workWindowApplies} from './money-derived.js';
+import {getApplicableWorkWindows,getLoggedGigProfit,getPlannedNeeds,getTodayMoneyTargetSummary,getWeeklyMissionSummary,normalizeMoneyRoot} from './money-derived.js';
 import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
 import {getWellnessDay,getWellnessHomeSummary,getWeeklyWellnessSummary} from './wellness-derived.js';
 import {normalizeCreatorRoot,getUpcomingCreatorDeadlines,getCreatorReminderItems,getConventionCreatorSummary,getDailyCreatorFocus,getLinkedCollaborators} from './creator-derived.js';
