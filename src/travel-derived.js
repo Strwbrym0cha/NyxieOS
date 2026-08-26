@@ -59,7 +59,7 @@ export function getActiveTrip(rawTravel,date=localTravelDate()){
 }
 export function getUpcomingTrips(rawTravel,date=localTravelDate()){
   const root=Array.isArray(rawTravel)?{trips:rawTravel}:normalizeTravelRoot(rawTravel);
-  return root.trips.filter(trip=>trip.status!=='Complete'&&trip.status!=='Completed'&&trip.startDate&&trip.startDate>=localTravelDate(date)).slice().sort((a,b)=>dateTimeKey(a.startDate).localeCompare(dateTimeKey(b.startDate)));
+  return root.trips.filter(trip=>!['complete','completed'].includes(String(trip.status||'').toLowerCase())&&trip.startDate&&trip.startDate>=localTravelDate(date)).slice().sort((a,b)=>dateTimeKey(a.startDate).localeCompare(dateTimeKey(b.startDate)));
 }
 export function getTripCountdown(trip,date=localTravelDate()){
   if(!trip?.startDate)return 'Dates TBD';
@@ -115,7 +115,7 @@ export function getTripReadiness(trip,date=localTravelDate()){
   return {active,flight,stay,agenda:getTripDayAgenda(trip,date),packing:getTripPackingProgress(trip),confirmations:getTripConfirmationsSummary(trip),emergencyInfo:trip?.emergencyInfo||''};
 }
 export function getTravelSummary(rawTravel,date=localTravelDate()){
-  const root=normalizeTravelRoot(rawTravel);const active=getActiveTrip(root,date);const upcoming=getUpcomingTrips(root,date);const trip=active||upcoming[0]||null;
+  const root=normalizeTravelRoot(rawTravel);const active=getActiveTrip(root,date);const upcoming=getUpcomingTrips(root,date);const trip=active&&!['complete','completed'].includes(String(active.status||'').toLowerCase())?active:(upcoming[0]||active||null);
   return {trip,activeTrip:active,upcomingTrips:upcoming,nextFlight:getNextFlight(trip,date),nextStay:getCurrentOrNextStay(trip,date),packing:trip?getTripPackingProgress(trip):{total:0,packed:0,remaining:0,percentage:0,categories:{}},confirmations:trip?getTripConfirmationsSummary(trip):[],agenda:trip?getTripDayAgenda(trip,date):[],countdown:trip?getTripCountdown(trip,date):null};
 }
 export function getResetDefaults(){return RESET_DEFAULTS.slice();}
