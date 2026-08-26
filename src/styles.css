@@ -113,3 +113,15 @@
  .con-schedule-row,.con-check-row{align-items:flex-start;flex-wrap:wrap}
  .con-schedule-row .card-actions,.con-check-row .card-actions{width:100%;justify-content:flex-start}
 }
+
+/* Wellness parity */
+.wellness-screen{padding-bottom:calc(6.5rem + env(safe-area-inset-bottom))}
+.wellness-date-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 16px}.wellness-date-nav strong{color:var(--pink-deep)}
+.wellness-tabs{overflow-x:auto}.wellness-tabs button{min-width:72px}
+.wellness-card{margin-bottom:16px}.wellness-card h2{color:var(--pink-deep);margin-top:0}.wellness-card label{display:grid;gap:6px;margin:10px 0}.wellness-chip-group,.wellness-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wellness-check-label{display:flex!important;align-items:center;gap:9px;min-height:44px}.wellness-check-label input,.wellness-check-list input{width:20px;height:20px;accent-color:var(--pink)}
+.wellness-check-list{display:grid;gap:6px}.wellness-check-list label{display:flex;align-items:center;gap:9px;padding:8px 0}
+.wellness-total{color:var(--pink-deep);font:600 1.15rem Fredoka}.wellness-quick-water{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.wellness-quick-water button{min-height:46px;flex:1 1 74px}
+.wellness-log-list{display:grid;gap:4px;margin-top:12px}.wellness-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #f4d9e8;min-width:0}.wellness-log-row>span:first-child{min-width:0;overflow-wrap:anywhere}.wellness-log-row .card-actions{margin:0;flex-wrap:wrap;justify-content:flex-end}
+.wellness-low-card{background:linear-gradient(145deg,#fff0f8,#fff);border:2px solid var(--nyxie-pink)}.wellness-low-card h2{color:var(--pink-deep);margin:4px 0}.wellness-priority-list{display:grid;gap:10px;margin:18px 0}.wellness-priority-list b{padding:11px 12px;border-radius:14px;background:#fff;border:1px solid #f4b8d9;color:var(--plum)}
+.wellness-gentle-copy,.wellness-affirmation{color:var(--pink-deep);font-weight:800}.wellness-week-hero{background:linear-gradient(145deg,#fff0f8,#fff)}.wellness-week-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wellness-week-grid .card{margin:0}.wellness-week-grid strong{display:block;color:var(--pink-deep);font:600 1.7rem Fredoka;margin:6px 0}.wellness-week-grid small{color:var(--muted)}.wellness-goal-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid #f4d9e8;min-width:0}.wellness-goal-row>div:first-child{min-width:0;overflow-wrap:anywhere}.wellness-goal-row small{display:block;color:var(--muted);margin-top:3px}.wellness-editor{border:2px solid #f4b8d9}.wellness-editor .form-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:380px){.wellness-chip-group,.wellness-form-grid,.wellness-week-grid{grid-template-columns:1fr}.wellness-log-row,.wellness-goal-row{align-items:flex-start;flex-wrap:wrap}.wellness-log-row .card-actions,.wellness-goal-row .card-actions{width:100%;justify-content:flex-start}}
