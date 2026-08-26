@@ -27,11 +27,11 @@ export default function CosplayCrud({data,setData}){
  const [referenceEdit,setReferenceEdit]=useState(null);
  const project=projects.find(item=>String(item.id)===String(selected))||null;
  const saveProjects=(next,preferredActive=cosplay.activeId)=>{
-   const activeId=preferredActive!=null&&next.some(item=>String(item.id)===String(preferredActive))?preferredActive:(next[0]?.id??null);
-   const active=next.find(item=>String(item.id)===String(activeId));
+   const active=next.find(item=>preferredActive!=null&&String(item.id)===String(preferredActive))||next[0]||null;
+   const activeId=active?.id??null;
    setData({...data,cosplay:{...cosplay,projects:next,activeId,name:active?.name,progress:active?getProjectProgress(active):0,pieces:active?.pieces||[]}});
  };
- const setActive=id=>{const active=projects.find(item=>String(item.id)===String(id));setData({...data,cosplay:{...cosplay,activeId:id,name:active?.name,progress:active?getProjectProgress(active):0,pieces:active?.pieces||[]}})};
+ const setActive=id=>{const active=projects.find(item=>String(item.id)===String(id));setData({...data,cosplay:{...cosplay,activeId:active?.id??null,name:active?.name,progress:active?getProjectProgress(active):0,pieces:active?.pieces||[]}})};
  const removeProject=target=>{
    if(!window.confirm('Delete this cosplay project?'))return;
    const next=projects.filter(item=>String(item.id)!==String(target.id));
