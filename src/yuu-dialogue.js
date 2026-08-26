@@ -48,6 +48,8 @@ export function generateReply(intent,data,settings={},options={}){
    if(c.nextTrip)parts.push((c.nextTrip.destination||c.nextTrip.name||'Your next trip')+(c.nextTrip.startDate?' on '+formatDate(c.nextTrip.startDate):''));
    if(c.nextUpload)parts.push('content upload '+formatDate(c.nextUpload.uploadDeadline));
    if(c.money.upcomingMoney[0])parts.push(c.money.upcomingMoney[0].title+' due '+formatDate(c.money.upcomingMoney[0].due));
+   const reminderPreview=(c.reminderBuckets?.upcoming||[]).slice(0,2);
+   if(reminderPreview.length)parts.push('planner reminder '+reminderPreview.map(item=>item.title).join(', '));
    return {text:parts.length?(tone==='Gentle'?'Here is what is coming up: ':tone==='Bratty'?'Yare yare. The future is busy: ':'Coming up: ')+parts.slice(0,more?5:3).join(' · '):'Nothing urgent is coming up yet. Your future is suspiciously peaceful.',state:'normal'};
   }
   case 'money_status':{
@@ -245,12 +247,12 @@ export function generateReply(intent,data,settings={},options={}){
    return {text:(tone==='Gentle'?'Your work options today: ':tone==='Bratty'?'Yare yare. Your shifts today: ':'Today’s work windows: ')+windows.map(w=>(w.start||'flexible')+'–'+(w.end||'flexible')).join(' · ')+'.',state:'money'};
   }
   case 'help':
-   return {text:'I can help with tasks, money, cosplay, conventions, travel, content, routines, work windows, and wellness. Ask me what is next.',state:'normal'};
+   return {text:'I can help with tasks, money, cosplay, conventions, travel, content, routines, work windows, wellness, and reminders. Ask me what is next.',state:'normal'};
   case 'thanks':
    return {text:pick(['You are welcome. Try not to break the planner.','Anytime, Nyxie.','Yare yare. I had it handled.'],seed),state:'proud'};
   case 'relationship_boundary':
    return {text:'Yare yare. Romance is above my pay grade. Ask me about your planner instead.',state:'normal'};
   default:
-   return {text:'Yare yare. I can help with your tasks, money, cosplay, conventions, travel, content, routines, work, or wellness.',state:'normal'};
+   return {text:'Yare yare. I can help with your tasks, money, cosplay, conventions, travel, content, routines, work, wellness, or reminders.',state:'normal'};
  }
 }
