@@ -24,6 +24,10 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/\b(low energy|tired|wellness|water|meals?|sleep|rest day|movement|feeling exhausted)\b/.test(text))return {intent:'wellness_status',text};
  if(/\b(work window|work windows|shift|shifts|when should i work|when can i work|work today|work tonight)\b/.test(text))return {intent:'work_status',text};
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
+ if(/\b(what.s next at the con|what is next at the con|next at the convention|next at con)\b/.test(text))return {intent:'convention_status',topic:'next',text};
+ if(/\b(what should i prep next|prep next|what do i prep)\b/.test(text))return {intent:'convention_status',topic:'prep',text};
+ if(/\b(photoshoot|photoshoot today|photoshoots today)\b/.test(text))return {intent:'convention_status',topic:'photoshoots',text};
+ if(/\b(content.*need|content.*left|how much content)\b/.test(text))return {intent:'convention_status',topic:'content',text};
  if(/\b(convention|conventions|con prep|con prep|con day|packing for the con|next con)\b/.test(text))return {intent:'convention_status',text};
  if(/\b(travel|trip|flight|flights|airline|airport|lodging|hotel|packing for my trip)\b/.test(text))return {intent:'travel_status',text};
  if(/\b(still need to buy|what.*need.*buy)\b/.test(text))return {intent:'cosplay_status',topic:'buy',text};
