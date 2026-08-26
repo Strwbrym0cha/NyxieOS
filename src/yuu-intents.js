@@ -19,6 +19,11 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/^(?:hi|hey|hello|yo|hiya|good morning|good evening)\b/.test(text))return {intent:'greeting',text};
  if(/^(?:thanks|thank you|thx|ty)\b/.test(text))return {intent:'thanks',text};
  if(/^(?:help|what can you do|commands|options)\b/.test(text))return {intent:'help',text};
+ if(/\b(what do i need to remember today|remember today)\b/.test(text))return {intent:'reminder_status',topic:'today',text};
+ if(/\b(anything important today|what is important today|what's important today|important today)\b/.test(text))return {intent:'reminder_status',topic:'important',text};
+ if(/\b(what is overdue|what's overdue|overdue reminders|overdue)\b/.test(text))return {intent:'reminder_status',topic:'overdue',text};
+ if(/\b(what reminders are coming up|upcoming reminders|reminders? coming up)\b/.test(text))return {intent:'reminder_status',topic:'upcoming',text};
+ if(/\b(what do i need to remember|reminders?|remember)\b/.test(text))return {intent:'reminder_status',topic:'today',text};
  if(/\b(how much should i make|make per day|per remaining day|aim to make|target today|today target)\b/.test(text))return {intent:'money_status',topic:'dailyTarget',text};
  if(/\b(bills?|subscriptions?|obligations?)\b/.test(text))return {intent:'money_status',topic:'obligations',text};
  if(/\b(gig profit|gig earnings|gig expenses|logged gig)\b/.test(text))return {intent:'money_status',topic:'gigProfit',text};
@@ -71,4 +76,4 @@ export function parseIntent(input,{lastIntent=null}={}){
  return {intent:'unknown',text};
 }
 
-export const supportedIntents=['greeting','today_tasks','upcoming','money_status','cosplay_status','convention_status','travel_status','creator_status','routine_status','wellness_status','work_status','help','thanks','unknown','relationship_boundary'];
+export const supportedIntents=['greeting','today_tasks','upcoming','reminder_status','money_status','cosplay_status','convention_status','travel_status','creator_status','routine_status','wellness_status','work_status','help','thanks','unknown','relationship_boundary'];
