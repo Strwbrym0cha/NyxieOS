@@ -26,7 +26,14 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
  if(/\b(convention|conventions|con prep|con prep|con day|packing for the con|next con)\b/.test(text))return {intent:'convention_status',text};
  if(/\b(travel|trip|flight|flights|airline|airport|lodging|hotel|packing for my trip)\b/.test(text))return {intent:'travel_status',text};
- if(/\b(cosplay|costume|wig|jacket|boots|piece|pieces|ready for)\b/.test(text))return {intent:'cosplay_status',text};
+ if(/\b(still need to buy|need to buy|what.*buy|buy|commission)\b/.test(text)&&/\b(cosplay|costume|piece|wig|contacts|shoes|prop)\b/.test(text))return {intent:'cosplay_status',topic:'buy',text};
+ if(/\bcontacts?\b/.test(text))return {intent:'cosplay_status',topic:'contacts',text};
+ if(/\bshoes?\b/.test(text))return {intent:'cosplay_status',topic:'shoes',text};
+ if(/\b(repair|repairs|repairing)\b/.test(text))return {intent:'cosplay_status',topic:'repairs',text};
+ if(/\b(not packed|isn.t packed|what.*packed|packed)\b/.test(text))return {intent:'cosplay_status',topic:'packed',text};
+ if(/\b(what piece is next|piece is next|next piece)\b/.test(text))return {intent:'cosplay_status',topic:'next',text};
+ if(/\b(how ready|ready is my cosplay|readiness)\b/.test(text))return {intent:'cosplay_status',topic:'readiness',text};
+ if(/\b(cosplay|costume|wig|jacket|boots|piece|pieces|ready for)\b/.test(text))return {intent:'cosplay_status',topic:'attention',text};
  if(/\b(money|cash|wallet|weekly goal|weekly mission|earned|spendable|available today|how much do i have)\b/.test(text))return {intent:'money_status',text};
  if(/\b(routine|routines|ritual|steps)\b/.test(text))return {intent:'routine_status',text};
  if(/\b(today|to do|todo|task|tasks|my list|schedule|what do i need|what's on)\b/.test(text))return {intent:'today_tasks',text};
