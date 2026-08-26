@@ -8,6 +8,27 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="NyxieOS" />
     <title>NyxieOS ✨</title>
+    <style>
+      /* Targeted Wellness mobile checkbox hotfix. The global .card > label input rule
+         makes direct-child checkboxes full-width, which pushes their text off-screen. */
+      .wellness-card > .wellness-check-label {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        width: 100%;
+      }
+      .wellness-card > .wellness-check-label input[type="checkbox"] {
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        min-height: 20px !important;
+        padding: 0 !important;
+        margin: 0;
+        flex: 0 0 20px;
+        accent-color: var(--nyxie-pink, #F45BB2);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
