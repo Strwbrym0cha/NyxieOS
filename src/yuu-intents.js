@@ -29,6 +29,13 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/\b(how was my week|wellness this week|week wellness)\b/.test(text))return {intent:'wellness_status',topic:'week',text};
  if(/\b(low energy|tired|wellness|water|meals?|sleep|rest day|movement|feeling exhausted)\b/.test(text))return {intent:'wellness_status',text};
  if(/\b(work window|work windows|shift|shifts|when should i work|when can i work|work today|work tonight)\b/.test(text))return {intent:'work_status',text};
+ if(/\b(what do i need to film|what should i film|to film|film next)\b/.test(text))return {intent:'creator_status',topic:'toFilm',text};
+ if(/\b(what am i editing|editing queue|what.*editing)\b/.test(text))return {intent:'creator_status',topic:'editing',text};
+ if(/\b(what needs to post|post soon|posting today|what am i posting)\b/.test(text))return {intent:'creator_status',topic:'posting',text};
+ if(/\b(what content.*con|content.*convention|con content)\b/.test(text))return {intent:'creator_status',topic:'convention',text};
+ if(/\b(who am i shooting with|who.*shooting|collaborator|photographer)\b/.test(text))return {intent:'creator_status',topic:'collaborators',text};
+ if(/\b(what caption|caption did i write)\b/.test(text))return {intent:'creator_status',topic:'caption',text};
+ if(/\b(creator work.*attention|creator.*attention|content needs attention)\b/.test(text))return {intent:'creator_status',topic:'attention',text};
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
  if(/\b(what.s next at the con|what is next at the con|next at the convention|next at con)\b/.test(text))return {intent:'convention_status',topic:'next',text};
  if(/\b(what should i prep next|prep next|what do i prep)\b/.test(text))return {intent:'convention_status',topic:'prep',text};
