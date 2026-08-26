@@ -1,9 +1,8 @@
-import {getPlannedNeeds} from './money-derived.js';
+import {getApplicableWorkWindows,getLoggedGigProfit,getPlannedNeeds,getTodayMoneyTargetSummary,getWeeklyMissionSummary,normalizeMoneyRoot,workWindowApplies} from './money-derived.js';
 import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
 import {getWellnessDay,getWellnessHomeSummary,getWeeklyWellnessSummary} from './wellness-derived.js';
 import {normalizeCreatorRoot,getUpcomingCreatorDeadlines,getCreatorReminderItems,getConventionCreatorSummary,getDailyCreatorFocus,getLinkedCollaborators} from './creator-derived.js';
 import {getConventionContentSummary,getConventionEssentials,getPrepSuggestions,getTodayPhotoshoots,getTodaySchedule,getUpcomingConventions,getLinkedCosplays} from './convention-derived.js';
-const DAY_NAMES=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 export const localDate=(value=new Date())=>{
  const date=value instanceof Date?value:new Date(value);
@@ -12,17 +11,6 @@ export const localDate=(value=new Date())=>{
 export const shiftDate=(date,days)=>{const next=new Date(date+'T12:00:00');next.setDate(next.getDate()+days);return localDate(next)};
 export const daysUntil=date=>{if(!date)return null;return Math.ceil((new Date(date+'T12:00:00')-new Date(localDate()+'T12:00:00'))/86400000)};
 export const formatDate=date=>date?new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}).format(new Date(date+'T12:00:00')):'date TBD';
-
-export function workWindowApplies(window,date=localDate()){
- if(!window||window.active===false)return false;
- const day=new Date(date+'T12:00:00').getDay();
- const label=String(window.days||window.label||window.day||'').toLowerCase();
- if(!label)return true;
- if(label.includes('weekday'))return day>=1&&day<=5;
- if(label.includes('weekend'))return day===0||day===6;
- const found=DAY_NAMES.filter(name=>label.includes(name)||label.includes(name.slice(0,3)));
- return found.length?found.includes(DAY_NAMES[day]):false;
-}
 
 const sortedBy=(items,key)=>items.filter(item=>item?.[key]).slice().sort((a,b)=>String(a[key]).localeCompare(String(b[key])));
 const unfinished=items=>(items||[]).filter(item=>item&&item.status!=='Ready'&&!item.done&&!item.completed);
@@ -37,10 +25,14 @@ export function getPlannerContext(data={},date=localDate()){
  const tomorrowTasks=tasks.filter(task=>task.date===shiftDate(date,1)&&!task.done);
  const overdueTasks=tasks.filter(task=>task.date&&task.date<date&&!task.done);
  const plannedNeeds=getPlannedNeeds(data);
- const money=data.money||{};
- const remaining=Math.max(0,Number(money.weeklyGoal||0)-Number(money.weeklyEarned||0));
- const workWindows=(money.workWindows||[]).filter(window=>workWindowApplies(window,date));
- const upcomingMoney=sortedBy(money.upcoming||[],'due').filter(item=>!item.done);
+ const money=normalizeMoneyRoot(data.money);
+ const mission=getWeeklyMissionSummary(money);
+ const targetSummary=getTodayMoneyTargetSummary(money,date);
+ const remaining=mission.remaining;
+ const workWindows=getApplicableWorkWindows(money,date);
+ const upcomingMoney=sortedBy(money.upcoming,'due').filter(item=>!item.done);
+ const obligations=sortedBy(money.obligations,'dueDate').filter(item=>item.active!==false);
+ const gigProfit=getLoggedGigProfit(money);
  const projects=data.cosplay?.projects||[];
  const activeCosplay=projects.find(project=>project.id===data.cosplay?.activeId)||projects[0]||null;
  const cosplayPieces=activeCosplay?.pieces||[];
@@ -91,7 +83,7 @@ export function getPlannerContext(data={},date=localDate()){
  const weeklyWellness=getWeeklyWellnessSummary(data.wellness,date);
  return {
    date,tasks,todayTasks,incompleteToday,timedToday,urgentToday,tomorrowTasks,overdueTasks,
-   money:{...money,remaining,workWindows,upcomingMoney,plannedNeeds},
+   money:{...money,remaining,mission,targetSummary,workWindows,upcomingMoney,obligations,gigProfit,plannedNeeds,savingsGoals:money.savingsGoals,debts:money.debts,purchases:money.purchases},
    activeCosplay,cosplayPieces,unfinishedPieces,overduePieces,dueSoonPieces,cosplayProgress,cosplayNextPiece,cosplayPackedCount,cosplayPrimaryReference,
    nearestConvention,upcomingConventions,conventionPrep,conventionSuggestions,conventionSchedule,conventionPhotoshoots,conventionEssentials,conventionContent,
    nextTrip,nextFlight,stays,transport,tripPacking,
