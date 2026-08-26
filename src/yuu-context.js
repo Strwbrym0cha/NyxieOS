@@ -1,4 +1,5 @@
 import {getPlannedNeeds} from './money-derived.js';
+import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
 const DAY_NAMES=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 export const localDate=(value=new Date())=>{
@@ -40,9 +41,13 @@ export function getPlannerContext(data={},date=localDate()){
  const projects=data.cosplay?.projects||[];
  const activeCosplay=projects.find(project=>project.id===data.cosplay?.activeId)||projects[0]||null;
  const cosplayPieces=activeCosplay?.pieces||[];
- const unfinishedPieces=unfinished(cosplayPieces);
+ const unfinishedPieces=getRemainingPieces(activeCosplay);
  const overduePieces=unfinishedPieces.filter(piece=>piece.due&&piece.due<date);
- const dueSoonPieces=unfinishedPieces.filter(piece=>piece.due&&piece.due>=date&&piece.due<=shiftDate(date,7));
+ const dueSoonPieces=getDueSoonPieces(activeCosplay,7);
+ const cosplayProgress=getProjectProgress(activeCosplay);
+ const cosplayNextPiece=getNextCosplayPiece(activeCosplay);
+ const cosplayPackedCount=getPackedCount(activeCosplay);
+ const cosplayPrimaryReference=getPrimaryReference(activeCosplay);
  const conventions=data.conventions?.items||[];
  const upcomingConventions=conventions.filter(item=>item.startDate&&item.startDate>=date&&item.status!=='Completed').sort((a,b)=>a.startDate.localeCompare(b.startDate));
  const nearestConvention=upcomingConventions[0]||null;
@@ -73,7 +78,7 @@ export function getPlannerContext(data={},date=localDate()){
  return {
    date,tasks,todayTasks,incompleteToday,timedToday,urgentToday,tomorrowTasks,overdueTasks,
    money:{...money,remaining,workWindows,upcomingMoney,plannedNeeds},
-   activeCosplay,cosplayPieces,unfinishedPieces,overduePieces,dueSoonPieces,
+   activeCosplay,cosplayPieces,unfinishedPieces,overduePieces,dueSoonPieces,cosplayProgress,cosplayNextPiece,cosplayPackedCount,cosplayPrimaryReference,
    nearestConvention,upcomingConventions,conventionPrep,
    nextTrip,nextFlight,stays,transport,tripPacking,
    creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,
