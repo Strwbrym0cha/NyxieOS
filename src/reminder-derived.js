@@ -127,7 +127,11 @@ export function getUpcomingReminders(data={},date=localReminderDate()){
 }
 export function getReminderBuckets(data={},date=localReminderDate()){
   const all=getAllReminders(data,date);const today=localReminderDate(date);
-  return {all,today:all.filter(item=>item.date<=today),upcoming:all.filter(item=>item.date>today),overdue:all.filter(item=>item.date<today),importantToday:all.filter(item=>item.date<=today&&item.priority==='Important')};
+  const todayItems=all.filter(item=>item.date<=today).sort((a,b)=>{
+    const rank=item=>item.date<today?0:item.priority==='Important'?1:item.time?2:3;
+    return rank(a)-rank(b)||dateTime(a.date,a.time).localeCompare(dateTime(b.date,b.time));
+  });
+  return {all,today:todayItems,upcoming:all.filter(item=>item.date>today),overdue:all.filter(item=>item.date<today),importantToday:all.filter(item=>item.date<=today&&item.priority==='Important')};
 }
 export function getReminderOverride(raw,id){
   return normalizeReminderRoot(raw).overrides?.[String(id)]||{};
