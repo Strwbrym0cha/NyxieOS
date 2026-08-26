@@ -57,7 +57,7 @@ export const getPrimaryReference=project=>{
  if(primary){
    const match=refs.find(ref=>String(ref.id)===String(primary));
    if(match)return match;
-   if(/^https?:\\/\\//i.test(String(primary)))return {url:String(primary),label:'Primary reference'};
+   if(String(primary).startsWith('http://')||String(primary).startsWith('https://'))return {url:String(primary),label:'Primary reference'};
  }
  const fallback=project?.primaryImage||project?.image||project?.imageUrl||project?.referenceImage;
  if(fallback)return typeof fallback==='object'?fallback:{url:String(fallback),label:'Primary reference'};
