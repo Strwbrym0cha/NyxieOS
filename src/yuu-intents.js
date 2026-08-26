@@ -19,7 +19,7 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/^(?:hi|hey|hello|yo|hiya|good morning|good evening)\b/.test(text))return {intent:'greeting',text};
  if(/^(?:thanks|thank you|thx|ty)\b/.test(text))return {intent:'thanks',text};
  if(/^(?:help|what can you do|commands|options)\b/.test(text))return {intent:'help',text};
- if(/\b(planned needs|planned expenses|planned upcoming|how much .*planned)\b/.test(text))return {intent:'money_status',topic:'planned',text};
+ if(/\b(how much should i make|make per day|per remaining day|aim to make|target today|today target)\b/.test(text))return {intent:'money_status',topic:'dailyTarget',text};\n if(/\b(bills?|subscriptions?|obligations?)\b/.test(text))return {intent:'money_status',topic:'obligations',text};\n if(/\b(gig profit|gig earnings|gig expenses|logged gig)\b/.test(text))return {intent:'money_status',topic:'gigProfit',text};\n if(/\b(convention fund|travel fund|cosplay fund|savings fund|savings goal)\b/.test(text))return {intent:'money_status',topic:'fund',subject:(text.match(/(convention fund|travel fund|cosplay fund|savings fund|savings goal)/)||[])[1]||'',text};\n if(/\b(planned needs|planned expenses|planned upcoming|how much .*planned)\b/.test(text))return {intent:'money_status',topic:'planned',text};
  if(/\b(how much|cost|budget|need|planned)\b.*\bcosplay\b/.test(text))return {intent:'money_status',topic:'cosplay',text};
  if(/\b(how am i doing|how am i today|wellness today)\b/.test(text))return {intent:'wellness_status',topic:'today',text};
  if(/\b(how much water|water have i had|water today)\b/.test(text))return {intent:'wellness_status',topic:'water',text};
