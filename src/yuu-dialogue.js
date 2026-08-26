@@ -122,10 +122,39 @@ export function generateReply(intent,data,settings={},options={}){
    return {text:'Your next trip is '+(trip.destination||trip.name||'saved')+(trip.startDate?' from '+formatDate(trip.startDate):'')+'.'+flightText+pack,state:'normal'};
   }
   case 'creator_status':{
-   const stages=c.stageCounts;
-   const due=c.overdueContent.length?' '+c.overdueContent.length+' content item'+(c.overdueContent.length===1?' is':'s are')+' overdue.':'';
-   const next=c.nextShoot?' Next shoot: '+formatDate(c.nextShoot.shootDate)+'.':c.nextUpload?' Next upload: '+formatDate(c.nextUpload.uploadDeadline)+'.':'';
-   return {text:'Creator HQ: '+(stages['To Film']||0)+' to film, '+(stages.Editing||0)+' editing, '+(stages.Ready||0)+' ready.'+next+due,state:'normal'};
+   const stages=c.stageCounts||{};
+   const items=c.creatorItems||[];
+   const list=(values,limit=4)=>values.slice(more?1:0,more?limit+2:limit).map(item=>item.title).join(', ');
+   const topic=options.topic||'overview';
+   if(topic==='toFilm'){
+    const work=items.filter(item=>item.stage==='To Film');
+    return {text:work.length?'To Film: '+list(work)+'.':'Nothing is waiting in To Film right now.',state:'normal'};
+   }
+   if(topic==='editing'){
+    const work=items.filter(item=>item.stage==='Editing');
+    return {text:work.length?'Editing queue: '+list(work)+'.':'The Editing queue is clear for now.',state:'normal'};
+   }
+   if(topic==='posting'){
+    const todayItems=(c.creatorFocus?.posts||[]).concat((c.creatorFocus?.reminders||[]));
+    const soon=(c.creatorDeadlines||[]).slice(0,more?5:3);
+    return {text:todayItems.length?'Posting today: '+list(todayItems)+'.':soon.length?'Post soon: '+soon.map(entry=>entry.item.title+' on '+formatDate(entry.date)).join(', ')+'.':'No posting deadlines are coming up yet.',state:'normal'};
+   }
+   if(topic==='convention'){
+    const summary=c.creatorConventionSummary||{items:[],target:0,done:0,remaining:0};
+    return {text:summary.items.length?'Convention content: '+summary.done+' / '+summary.target+' complete, '+summary.remaining+' remaining. Linked items: '+list(summary.items)+'.':'No linked convention content is on the board yet.',state:'normal'};
+   }
+   if(topic==='collaborators'){
+    const names=(c.creatorCollaborators||[]).filter(contact=>items.some(item=>(item.collaboratorIds||[]).map(String).includes(String(contact.id)))).map(contact=>contact.name);
+    return {text:names.length?'Production contacts: '+names.slice(0,more?6:4).join(', ')+'.':'No work collaborators are linked to Creator items yet.',state:'normal'};
+   }
+   if(topic==='caption'){
+    const subject=String(options.subject||'').toLowerCase();
+    const matches=items.filter(item=>item.captionDraft&&(!subject||item.title.toLowerCase().includes(subject)||subject.includes(item.title.toLowerCase())));
+    return {text:matches.length?matches[0].title+' caption draft: '+matches[0].captionDraft:'I could not find a matching caption draft yet.',state:'normal'};
+   }
+   const attention=items.filter(item=>item.stage!=='Posted'&&(item.reminderAt||item.uploadDeadline||item.shootDate));
+   const due=c.overdueContent?.length?' '+c.overdueContent.length+' overdue item'+(c.overdueContent.length===1?'':'s')+'.':'';
+   return {text:'Creator HQ: '+(stages['To Film']||0)+' to film, '+(stages.Editing||0)+' editing, '+(stages.Ready||0)+' ready.'+(attention.length?' '+attention[0].title+' is next on the board.':'')+due,state:'normal'};
   }
   case 'routine_status':{
    if(!c.routineSummaries.length)return {text:'No routines are set up yet.',state:'normal'};
