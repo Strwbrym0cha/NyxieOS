@@ -26,6 +26,7 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
  if(/\b(convention|conventions|con prep|con prep|con day|packing for the con|next con)\b/.test(text))return {intent:'convention_status',text};
  if(/\b(travel|trip|flight|flights|airline|airport|lodging|hotel|packing for my trip)\b/.test(text))return {intent:'travel_status',text};
+ if(/\b(still need to buy|what.*need.*buy)\b/.test(text))return {intent:'cosplay_status',topic:'buy',text};
  if(/\b(still need to buy|need to buy|what.*buy|buy|commission)\b/.test(text)&&/\b(cosplay|costume|piece|wig|contacts|shoes|prop)\b/.test(text))return {intent:'cosplay_status',topic:'buy',text};
  if(/\bcontacts?\b/.test(text))return {intent:'cosplay_status',topic:'contacts',text};
  if(/\bshoes?\b/.test(text))return {intent:'cosplay_status',topic:'shoes',text};
