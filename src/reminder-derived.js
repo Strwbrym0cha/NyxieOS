@@ -1,7 +1,7 @@
 import {getApplicableWorkWindows,getUpcomingObligations} from './money-derived.js';
 import {getDueSoonPieces,getRemainingPieces} from './cosplay-derived.js';
 import {getUpcomingConventions} from './convention-derived.js';
-import {getUpcomingCreatorDeadlines} from './creator-derived.js';
+
 import {getTravelSummary,localTravelDate} from './travel-derived.js';
 
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
@@ -62,7 +62,7 @@ function applyOverrides(items,root,date){
   });
 }
 export function getManualReminders(raw,date=localReminderDate()){
-  return normalizeReminderRoot(raw).manual.map(normalizeManualReminder).filter(item=>!item.done).filter(item=>inWindow(item.date,date)).map(item=>({...item,sourceType:'manual',sourceId:item.id}));
+  return normalizeReminderRoot(raw).manual.map(normalizeManualReminder).filter(item=>!item.done).map(item=>({...item,sourceType:'manual',sourceId:item.id}));
 }
 export function getDerivedReminders(data={},date=localReminderDate()){
   const today=localReminderDate(date);const items=[];
@@ -99,9 +99,20 @@ export function getDerivedReminders(data={},date=localReminderDate()){
     asArray(trip.itinerary).forEach(item=>{if(inWindow(item.date,today))items.push(reminder('itinerary:'+trip.id+':'+item.id,item.title||'Trip itinerary','travelItinerary',trip.id,item.date,item.time,{category:'Travel',open:'travel'}))});
   }
   const creator=data.creator||{};
-  getUpcomingCreatorDeadlines(creator,today).slice(0,20).forEach(entry=>{
-    const due=datePart(entry.date)||datePart(entry.item?.[entry.field]);if(!due||!inWindow(due,today))return;
-    items.push(reminder('creator:'+entry.item.id+':'+entry.field+':'+due,(entry.item.title||'Creator item')+' · '+(entry.field==='uploadDeadline'?'upload deadline':entry.field==='shootDate'?'shoot':'edit'), 'creator',entry.item.id,due,timePart(entry.item?.[entry.field]),{priority:due===today?'Important':'Normal',category:'Creator',open:'creator'}));
+  asArray(creator.items).forEach((item,index)=>{
+    if(String(item?.stage||'').toLowerCase()==='posted')return;
+    const sourceId=item?.id??index;
+    ['shootDate','editDate','uploadDeadline'].forEach(field=>{
+      const due=datePart(item?.[field]);
+      if(!due||!inWindow(due,today))return;
+      const label=field==='uploadDeadline'?'upload deadline':field==='shootDate'?'shoot':'edit';
+      items.push(reminder('creator:'+sourceId+':'+field+':'+due,(item?.title||'Creator item')+' · '+label,'creator',sourceId,due,timePart(item?.[field]),{priority:due===today?'Important':'Normal',category:'Creator',open:'creator'}));
+    });
+    const reminderAt=String(item?.reminderAt||'');
+    const reminderDate=datePart(reminderAt);
+    if(reminderDate&&inWindow(reminderDate,today)&&!item?.reminderDismissed){
+      items.push(reminder('creator:'+sourceId+':reminder:'+reminderDate,(item?.title||'Creator item')+' · reminder','creator',sourceId,reminderDate,timePart(reminderAt),{priority:reminderDate===today?'Important':'Normal',category:'Creator',open:'creator'}));
+    }
   });
   return items.filter((item,index,list)=>list.findIndex(other=>other.id===item.id)===index);
 }
