@@ -11,7 +11,7 @@ export const normalizeProjectState=value=>{
 const localNoon=value=>{
  if(value instanceof Date)return new Date(value.getFullYear(),value.getMonth(),value.getDate(),12);
  const raw=String(value||'');
- if(/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)){const parts=raw.split('-').map(Number);return new Date(parts[0],parts[1]-1,parts[2],12)}
+ if(raw.length===10&&raw[4]==='-'&&raw[7]==='-'){const parts=raw.split('-').map(Number);return new Date(parts[0],parts[1]-1,parts[2],12)}
  const date=new Date(raw);return Number.isNaN(date.getTime())?null:new Date(date.getFullYear(),date.getMonth(),date.getDate(),12);
 };
 const todayNoon=()=>localNoon(new Date());
