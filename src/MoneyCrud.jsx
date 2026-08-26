@@ -1,97 +1,111 @@
-import React,{useState} from 'react';
-import {getPlannedNeeds,toMoneyNumber} from './money-derived.js';
+import React,{useMemo,useState} from 'react';
+import {
+ getApplicableWorkWindows,
+ getLoggedGigProfit,
+ getPlannedNeeds,
+ getSavingsProgress,
+ getTodayMoneyTargetSummary,
+ getTransactionBucket,
+ getTransactionKind,
+ getWeeklyMissionSummary,
+ localDate,
+ normalizeMoneyRoot,
+ applyMoneyTransaction,
+ toMoneyNumber
+} from './money-derived.js';
 
 const Card=({children,className=''})=><section className={'card '+className}>{children}</section>;
-const currency=value=>'$'+toMoneyNumber(value).toFixed(2);
-const today=()=>new Date().toLocaleDateString('en-CA');
+const money=value=>{
+ const number=Number(value);
+ return '$'+(Number.isFinite(number)?number:0).toFixed(2);
+};
+const numberValue=value=>{const number=Number(value);return Number.isFinite(number)?number:0};
+const idFor=()=>Date.now()+Math.floor(Math.random()*1000);
+const today=()=>localDate();
+const timeNow=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const validBucket=value=>['life','con','fun'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'';
 
-function SourceButton({label,screen,setScreen}){
- if(!setScreen)return null;
- return <button type="button" className="secondary tiny-action" onClick={()=>setScreen(screen)}>{label}</button>;
+function SourceButton({label,screen,setScreen}){return setScreen?<button type="button" className="secondary tiny-action" onClick={()=>setScreen(screen)}>{label}</button>:null}
+function Empty({children}){return <p className="empty-derived">{children}</p>}
+function ViewTabs({view,setView}){return <div className="segmented money-view-tabs" role="tablist">{['today','mission','plan','activity'].map(item=><button type="button" role="tab" aria-selected={view===item} className={view===item?'selected':''} onClick={()=>setView(item)} key={item}>{item[0].toUpperCase()+item.slice(1)}</button>)}</div>}
+
+function InputField({label,value,onChange,type='text',options,placeholder,wide=false,min}){
+ return <label className={wide?'form-field form-field-wide':'form-field'}><span>{label}</span>{type==='select'?<select value={value??''} onChange={e=>onChange(e.target.value)}>{options.map(option=><option key={option.value??option} value={option.value??option}>{option.label??option}</option>)}</select>:type==='textarea'?<textarea value={value??''} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/>:type==='checkbox'?<span className="toggle-row"><input type="checkbox" checked={Boolean(value)} onChange={e=>onChange(e.target.checked)}/><span>{label}</span></span>:<input type={type} min={min} value={value??''} placeholder={placeholder} onChange={e=>onChange(e.target.value)}/>}</label>
+}
+
+function RecordEditor({title,value,setValue,fields,onSave,onCancel}){
+ return <Card className="money-editor"><h2>{title}</h2><form className="creator-form-grid" onSubmit={e=>{e.preventDefault();onSave(value)}}>{fields.map(field=><InputField key={field.key} {...field} value={value[field.key]} onChange={next=>setValue({...value,[field.key]:next})}/>) }<div className="form-actions"><button className="primary" type="submit">Save</button><button className="secondary" type="button" onClick={onCancel}>Cancel</button></div></form></Card>
 }
 
 function PlannedNeeds({data,setScreen}){
  const planned=getPlannedNeeds(data);
- const cosplayRows=planned.cosplay.projects.filter(project=>project.estimatedTotal>0||project.remainingNeed>0);
- const conventionRows=planned.conventions.items;
- const travelRows=planned.travel.trips;
- const hasBreakdown=cosplayRows.length||conventionRows.length||travelRows.length||planned.manualUpcoming>0;
- return <>
-  <Card className="planned-needs-card">
-   <div className="derived-hero-label"><small>PLANNED NEEDS</small><span>Read-only planning view</span></div>
-   <strong className="planned-needs-total">{currency(planned.total)}</strong>
-   <p className="muted">What you still have planned across your planner.</p>
-   {hasBreakdown?<div className="derived-summary-list">
-    {planned.cosplay.remainingNeed>0&&<div><span>Cosplay remaining</span><b>{currency(planned.cosplay.remainingNeed)}</b></div>}
-    {planned.conventions.total>0&&<div><span>Conventions</span><b>{currency(planned.conventions.total)}</b></div>}
-    {planned.travel.total>0&&<div><span>Travel</span><b>{currency(planned.travel.total)}</b></div>}
-    {planned.manualUpcoming>0&&<div><span>Manual upcoming</span><b>{currency(planned.manualUpcoming)}</b></div>}
-   </div>:<p className="empty-derived">No big planned expenses yet ✨</p>}
-   <div className="derived-shortcuts">
-    <SourceButton label="Open Cosplay" screen="cosplay" setScreen={setScreen}/>
-    <SourceButton label="Open Conventions" screen="conventions" setScreen={setScreen}/>
-    <SourceButton label="Open Travel" screen="travel" setScreen={setScreen}/>
-   </div>
-  </Card>
-  {cosplayRows.length>0&&<Card className="derived-breakdown-card">
-   <div className="section-title-row"><h2>Cosplay estimates</h2><small>Estimated, not paid accounting</small></div>
-   {cosplayRows.map(project=><div className="derived-money-row" key={project.id||project.name}><div><b>{project.name}</b><small>{currency(project.estimatedTotal)} estimated · {currency(project.remainingNeed)} estimated remaining</small></div><strong>{currency(project.remainingNeed)}</strong></div>)}
-   <div className="derived-total-row"><span>Cosplay estimated total</span><b>{currency(planned.cosplay.estimatedTotal)}</b></div>
-   <div className="derived-total-row"><span>Cosplay remaining</span><b>{currency(planned.cosplay.remainingNeed)}</b></div>
-  </Card>}
-  {conventionRows.length>0&&<Card className="derived-breakdown-card">
-   <div className="section-title-row"><h2>Conventions</h2><small>Active planned budgets</small></div>
-   {conventionRows.map(item=><div className="derived-money-row" key={item.id||item.name}><div><b>{item.name}</b><small>Planned budget</small></div><strong>{currency(item.planned)}</strong></div>)}
-   <div className="derived-total-row"><span>Convention planned total</span><b>{currency(planned.conventions.total)}</b></div>
-  </Card>}
-  {travelRows.length>0&&<Card className="derived-breakdown-card">
-   <div className="section-title-row"><h2>Travel</h2><small>Active planned budgets</small></div>
-   {travelRows.map(item=><div className="derived-money-row" key={item.id||item.name}><div><b>{item.name}</b><small>Planned budget</small></div><strong>{currency(item.planned)}</strong></div>)}
-   <div className="derived-total-row"><span>Travel planned total</span><b>{currency(planned.travel.total)}</b></div>
-  </Card>}
-  {planned.manualUpcoming>0&&<Card className="derived-breakdown-card">
-   <div className="section-title-row"><h2>Manual upcoming</h2><small>Money items you entered</small></div>
-   <div className="derived-total-row"><span>Manual upcoming total</span><b>{currency(planned.manualUpcoming)}</b></div>
-  </Card>}
- </>;
+ const rows=planned.cosplay.projects.filter(project=>project.estimatedTotal>0||project.remainingNeed>0);
+ const has=rows.length||planned.conventions.items.length||planned.travel.trips.length||planned.manualUpcoming>0;
+ return <Card className="planned-needs-card"><div className="derived-hero-label"><small>PLANNED NEEDS</small><span>Read-only planning view</span></div><strong className="planned-needs-total">{money(planned.total)}</strong><p className="muted">Planning context only. It does not change Available Today.</p>{has?<div className="derived-summary-list">{planned.cosplay.remainingNeed>0&&<div><span>Cosplay remaining</span><b>{money(planned.cosplay.remainingNeed)}</b></div>}{planned.conventions.total>0&&<div><span>Conventions</span><b>{money(planned.conventions.total)}</b></div>}{planned.travel.total>0&&<div><span>Travel</span><b>{money(planned.travel.total)}</b></div>}{planned.manualUpcoming>0&&<div><span>Manual upcoming</span><b>{money(planned.manualUpcoming)}</b></div>}</div>:<Empty>No big planned expenses yet ✨</Empty>}<div className="derived-shortcuts"><SourceButton label="Open Cosplay" screen="cosplay" setScreen={setScreen}/><SourceButton label="Open Conventions" screen="conventions" setScreen={setScreen}/><SourceButton label="Open Travel" screen="travel" setScreen={setScreen}/></div></Card>
+}
+
+function WorkWindows({root,saveMoney,setWindowEdit}){
+ const windows=root.workWindows;
+ const changeCheckin=(window,status)=>{
+   const date=today();const checkins={...(root.workWindowCheckins||{})};const day={...(checkins[date]||{})};
+   const existing=day[String(window.id)]||{};let note='';
+   if(status==='skipped')note=window.prompt?.('What happened? (optional)')||'';
+   day[String(window.id)]={...existing,status,...(status==='started'?{startedAt:timeNow()}:{note})};
+   saveMoney({workWindowCheckins:{...checkins,[date]:day}});
+ };
+ return <Card className="work-window-card"><div className="section-title-row"><h2>Good Work Windows</h2><small>Lightweight intention check-ins</small></div>{windows.length?windows.map(window=>{const checkin=window.checkin;return <div className="work-window-row" key={window.id}><div><b>{window.label||window.days||'Flexible window'}</b><small>{window.start||'Flexible'}{window.end?' – '+window.end:''}{window.note?' · '+window.note:''}</small>{checkin?.status==='started'&&<span className="pink-attention">Started{checkin.startedAt?' at '+checkin.startedAt:''} ✨</span>}{checkin?.status==='skipped'&&<span className="muted">Skipped for today{checkin.note?' · '+checkin.note:''}</span>}</div><div className="card-actions">{checkin?.status==='started'?<button type="button" className="secondary edit-action" onClick={()=>changeCheckin(window,'skipped')}>Skip</button>:<button type="button" className="primary" onClick={()=>changeCheckin(window,'started')}>Start Work</button>}{checkin?.status==='skipped'&&<button type="button" className="secondary" onClick={()=>saveMoney({workWindowCheckins:{...(root.workWindowCheckins||{}),[today()]:{...(root.workWindowCheckins?.[today()]||{}),[String(window.id)]:null}}})}>Reset</button>}</div></div>}) : <Empty>No work windows yet. Add one for a gentle earning cue.</Empty>}<button type="button" className="secondary" onClick={()=>setWindowEdit({id:null,label:'',days:'Weekdays',start:'17:00',end:'21:00',active:true,note:''})}>+ Add work window</button></Card>
+}
+
+function TransactionList({root,setTxEdit,onDelete}){
+ if(!root.transactions.length)return <Empty>No logged activity yet.</Empty>;
+ return <div className="activity-list">{root.transactions.slice().reverse().map(tx=><div className="activity-row" key={tx.id}><div><b>{getTransactionKind(tx)==='spent'?'Spent':'Earned'} · {money(tx.amount)}</b><small>{tx.source||tx.label||'Unlabeled'}{tx.bucket?' · '+tx.bucket:''} · {tx.date||'date TBD'}{tx.gigRelated||/^gig$/i.test(tx.source||'')?' · Gig':''}</small></div><div className="card-actions"><button type="button" className="edit-action" onClick={()=>setTxEdit({...tx})}>Edit</button><button type="button" className="delete-action" onClick={()=>onDelete(tx)}>Delete</button></div></div>)}</div>
+}
+
+function PlanningList({title,items,empty,onAdd,onEdit,onDelete,renderItem,addLabel='+ Add'}){
+ return <Card><div className="section-title-row"><h2>{title}</h2><button type="button" className="secondary tiny-action" onClick={onAdd}>{addLabel}</button></div>{items.length?items.map(item=><div className="money-planning-row" key={item.id}><div>{renderItem(item)}</div><div className="card-actions"><button type="button" className="edit-action" onClick={()=>onEdit({...item})}>Edit</button><button type="button" className="delete-action" onClick={()=>onDelete(item)}>Delete</button></div></div>):<Empty>{empty}</Empty>}</Card>
 }
 
 export default function MoneyCrud({data,setData,setScreen}){
- const m=data.money||{},[tx,setTx]=useState(null),[windowEdit,setWindowEdit]=useState(null),[upcomingEdit,setUpcomingEdit]=useState(null),transactions=m.transactions||[],windows=m.workWindows||[],upcoming=m.upcoming||[];
- const save=patch=>setData({...data,money:{...m,...patch}});
- const apply=(old,n)=>{
-  let weekly=Number(m.weeklyEarned||0),earnedToday=Number(m.earnedToday||0),available=Number(m.availableToday||0),b={...m.buckets};
-  if(old?.kind==='earned'){weekly-=Number(old.amount);if(old.date===today())earnedToday-=Number(old.amount)}
-  if(old?.kind==='spent'){available+=Number(old.amount);b[old.source]=(b[old.source]||0)+Number(old.amount)}
-  if(n?.kind==='earned'){weekly+=Number(n.amount);if(n.date===today())earnedToday+=Number(n.amount)}
-  if(n?.kind==='spent'){available-=Number(n.amount);b[n.source]=(b[n.source]||0)-Number(n.amount)}
-  save({weeklyEarned:weekly,earnedToday,availableToday:available,buckets:b,transactions:n?[...transactions.filter(x=>x.id!==n.id),n]:transactions.filter(x=>x.id!==old?.id)});
+ const root=useMemo(()=>normalizeMoneyRoot(data.money),[data.money]);
+ const [view,setView]=useState('today');
+ const [txEdit,setTxEdit]=useState(null),[windowEdit,setWindowEdit]=useState(null),[upcomingEdit,setUpcomingEdit]=useState(null),[obligationEdit,setObligationEdit]=useState(null),[savingEdit,setSavingEdit]=useState(null),[debtEdit,setDebtEdit]=useState(null),[purchaseEdit,setPurchaseEdit]=useState(null);
+ const saveMoney=patch=>setData({...data,money:{...root,...patch}});
+ const saveList=(key,value)=>{
+   const list=root[key]||[];const next={...value,id:value.id||idFor()};
+   saveMoney({[key]:value.id?list.map(item=>item.id===next.id?next:item):[...list,next]});
  };
- const listEditor=(value,setter,items,key)=>{
-  const submit=e=>{e.preventDefault();const n={...value,id:value.id||Date.now()};save({[key]:value.id?items.map(x=>x.id===n.id?n:x):[...items,n]});setter(null)};
-  return <Card><form className="log-form" onSubmit={submit}>{Object.keys(value).filter(k=>k!=='id').map(k=><label key={k}>{k}<input type={k.toLowerCase().includes('date')?'date':k==='amount'?'number':'text'} value={value[k]??''} onChange={e=>setter({...value,[k]:e.target.value})}/></label>)}<button className="primary">Save</button><button type="button" className="secondary" onClick={()=>setter(null)}>Cancel</button></form></Card>;
+ const deleteList=(key,item)=>{
+   if(window.confirm('Delete this item?'))saveMoney({[key]:(root[key]||[]).filter(row=>row.id!==item.id)});
  };
- const goal=toMoneyNumber(m.weeklyGoal),earned=toMoneyNumber(m.weeklyEarned),goalRemaining=Math.max(0,goal-earned),progress=goal?Math.min(100,Math.max(0,earned/goal*100)):0;
- return <><header><small>Money magic</small><h1>Money</h1></header>
-  <Card className="money-hero">
-   <small>Available Today</small>
-   <strong>{currency(m.availableToday)}</strong>
-   <p>Usable money for today · still editable</p>
-   <label>Available Today<input className="hero-input" type="number" value={m.availableToday??0} onChange={e=>save({availableToday:Number(e.target.value)||0})}/></label>
-  </Card>
-  <Card className="money-mission">
-   <div className="money-hero-label"><small>WEEKLY MONEY MISSION</small><b>{currency(earned)} / {currency(goal)}</b></div>
-   <div className="progress"><i style={{width:progress+'%'}}/></div>
-   <div className="money-mission-meta"><span>{currency(goalRemaining)} to goal</span><span>{toMoneyNumber(m.daysRemaining)} days remaining</span></div>
-   <div className="money-edit-grid"><label>Weekly Goal<input type="number" value={m.weeklyGoal??0} onChange={e=>save({weeklyGoal:Number(e.target.value)||0})}/></label><label>Days Remaining<input type="number" value={m.daysRemaining??0} onChange={e=>save({daysRemaining:Number(e.target.value)||0})}/></label></div>
-  </Card>
-  <Card><h2>Money buckets</h2><div className="bucket-grid">{['life','con','fun'].map(k=><label className="bucket" key={k}>{k}<input type="number" value={m.buckets?.[k]??0} onChange={e=>save({buckets:{...m.buckets,[k]:Number(e.target.value)||0}})}/></label>)}</div></Card>
-  <PlannedNeeds data={data} setScreen={setScreen}/>
-  <Card><b>Recent Activity</b>{transactions.map(x=><div className="activity-row" key={x.id}><span>{x.kind} · {'$'}{x.amount} · {x.source}</span><span><button className="edit-action" onClick={()=>setTx({...x})}>Edit</button><button className="delete-action" onClick={()=>{if(window.confirm('Delete transaction?'))apply(x,null)}}>Delete</button></span></div>)}<button className="primary" onClick={()=>setTx({kind:'earned',amount:0,source:'Gig',date:today()})}>+ Log transaction</button></Card>
-  {tx&&<Card><form className="log-form" onSubmit={e=>{e.preventDefault();apply(transactions.find(x=>x.id===tx.id),{...tx,id:tx.id||Date.now(),amount:Number(tx.amount)||0});setTx(null)}}><label>Kind<select value={tx.kind} onChange={e=>setTx({...tx,kind:e.target.value})}><option value="earned">Earned</option><option value="spent">Spent</option></select></label><label>Amount<input type="number" value={tx.amount} onChange={e=>setTx({...tx,amount:e.target.value})}/></label><label>Source / bucket<input value={tx.source} onChange={e=>setTx({...tx,source:e.target.value})}/></label><label>Date<input type="date" value={tx.date} onChange={e=>setTx({...tx,date:e.target.value})}/></label><button className="primary">Save</button><button type="button" className="secondary" onClick={()=>setTx(null)}>Cancel</button></form></Card>}
-  <Card><h2>Good Work Windows</h2>{windows.map(x=><div className="activity-row" key={x.id}><span>{x.days||x.label||'Flexible'} · {x.start||''}–{x.end||''}</span><span><button className="edit-action" onClick={()=>setWindowEdit({...x})}>Edit</button><button className="delete-action" onClick={()=>{if(window.confirm('Delete work window?'))save({workWindows:windows.filter(y=>y.id!==x.id)})}}>Delete</button></span></div>)}<button className="primary" onClick={()=>setWindowEdit({days:'Weekdays',start:'17:00',end:'21:00',active:true})}>+ Add window</button></Card>
-  {windowEdit&&listEditor(windowEdit,setWindowEdit,windows,'workWindows')}
-  <Card><h2>Upcoming Money</h2>{upcoming.map(x=><div className="activity-row" key={x.id}><span>{x.title} · {'$'}{x.amount} · {x.due}</span><span><button className="edit-action" onClick={()=>setUpcomingEdit({...x})}>Edit</button><button className="delete-action" onClick={()=>{if(window.confirm('Delete upcoming item?'))save({upcoming:upcoming.filter(y=>y.id!==x.id)})}}>Delete</button></span></div>)}<button className="primary" onClick={()=>setUpcomingEdit({title:'',amount:0,due:'',type:'Goal'})}>+ Add upcoming item</button></Card>
-  {upcomingEdit&&listEditor(upcomingEdit,setUpcomingEdit,upcoming,'upcoming')}
- </>;
+ const saveTransaction=next=>{
+   const rows=root.transactions||[];const old=next.id?rows.find(row=>row.id===next.id):null;
+   const clean={...next,id:next.id||idFor(),kind:getTransactionKind(next),amount:Math.max(0,numberValue(next.amount)),source:String(next.source||next.label||'').trim(),bucket:validBucket(next.bucket),date:next.date||today(),gigRelated:Boolean(next.gigRelated),note:next.note||''};
+   let adjusted=old?applyMoneyTransaction(root,old,-1):root;
+   adjusted=applyMoneyTransaction(adjusted,clean,1);
+   saveMoney({...adjusted,transactions:old?rows.map(row=>row.id===clean.id?clean:row):[...rows,clean],weeklyEarned:Math.max(0,numberValue(adjusted.weeklyEarned)),earnedToday:Math.max(0,numberValue(adjusted.earnedToday))});
+   setTxEdit(null);
+ };
+ const deleteTransaction=tx=>{
+   if(!window.confirm('Delete this transaction?'))return;
+   const adjusted=applyMoneyTransaction(root,tx,-1);
+   saveMoney({...adjusted,transactions:root.transactions.filter(row=>row.id!==tx.id),weeklyEarned:Math.max(0,numberValue(adjusted.weeklyEarned)),earnedToday:Math.max(0,numberValue(adjusted.earnedToday))});
+ };
+ const mission=getWeeklyMissionSummary(root),target=getTodayMoneyTargetSummary(root),windows=getApplicableWorkWindows(root,today()),profit=getLoggedGigProfit(root),planned=getPlannedNeeds(data);
+ const openTx=(kind='earned')=>setTxEdit({id:null,kind,amount:'',source:kind==='earned'?'Gig':'',bucket:'',gigRelated:kind==='earned',date:today(),note:''});
+ const renderEditor=()=>{
+   if(txEdit)return <RecordEditor title={txEdit.id?'Edit transaction':'Log money'} value={txEdit} setValue={setTxEdit} onSave={saveTransaction} onCancel={()=>setTxEdit(null)} fields={[{label:'Kind',key:'kind',type:'select',options:[{value:'earned',label:'Earned'},{value:'spent',label:'Spent'}]},{label:'Amount',key:'amount',type:'number',min:'0'},{label:'Source / label',key:'source',placeholder:'Gig, client, food…'},{label:'Bucket',key:'bucket',type:'select',options:[{value:'',label:'No bucket'},{value:'life',label:'Life'},{value:'con',label:'Con'},{value:'fun',label:'Fun'}]},{label:'Date',key:'date',type:'date'},{label:'Gig-related',key:'gigRelated',type:'checkbox'},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   if(windowEdit)return <RecordEditor title={windowEdit.id?'Edit work window':'Add work window'} value={windowEdit} setValue={setWindowEdit} onSave={value=>{saveList('workWindows',{...value,active:Boolean(value.active),days:value.days||value.label||''});setWindowEdit(null)}} onCancel={()=>setWindowEdit(null)} fields={[{label:'Label',key:'label',placeholder:'Good window'},{label:'Days',key:'days',placeholder:'Weekdays, Weekends, Monday, Wednesday'},{label:'Start',key:'start',type:'time'},{label:'End',key:'end',type:'time'},{label:'Active',key:'active',type:'checkbox'},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   if(upcomingEdit)return <RecordEditor title={upcomingEdit.id?'Edit upcoming money':'Add upcoming money'} value={upcomingEdit} setValue={setUpcomingEdit} onSave={value=>{saveList('upcoming',{...value,amount:Math.max(0,numberValue(value.amount))});setUpcomingEdit(null)}} onCancel={()=>setUpcomingEdit(null)} fields={[{label:'Title',key:'title'},{label:'Amount',key:'amount',type:'number',min:'0'},{label:'Due date',key:'due',type:'date'},{label:'Type / category',key:'type'},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   if(obligationEdit)return <RecordEditor title={obligationEdit.id?'Edit bill or subscription':'Add bill or subscription'} value={obligationEdit} setValue={setObligationEdit} onSave={value=>{saveList('obligations',{...value,amount:Math.max(0,numberValue(value.amount)),active:Boolean(value.active)});setObligationEdit(null)}} onCancel={()=>setObligationEdit(null)} fields={[{label:'Title',key:'title'},{label:'Type',key:'type',type:'select',options:['Bill','Subscription']},{label:'Amount',key:'amount',type:'number',min:'0'},{label:'Due date',key:'dueDate',type:'date'},{label:'Due day (optional)',key:'dueDay',type:'number',min:'1'},{label:'Frequency',key:'frequency',type:'select',options:['One-time','Weekly','Monthly','Annual','Custom']},{label:'Autopay',key:'autopay',type:'checkbox'},{label:'Active',key:'active',type:'checkbox'},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   if(savingEdit)return <RecordEditor title={savingEdit.id?'Edit savings goal':'Add savings or fund'} value={savingEdit} setValue={setSavingEdit} onSave={value=>{saveList('savingsGoals',{...value,target:Math.max(0,numberValue(value.target)),current:Math.max(0,numberValue(value.current)),active:Boolean(value.active)});setSavingEdit(null)}} onCancel={()=>setSavingEdit(null)} fields={[{label:'Title',key:'title'},{label:'Type',key:'type',type:'select',options:['Savings','Convention Fund','Travel Fund','Cosplay Fund','Other']},{label:'Target',key:'target',type:'number',min:'0'},{label:'Current',key:'current',type:'number',min:'0'},{label:'Target date',key:'targetDate',type:'date'},{label:'Active',key:'active',type:'checkbox'},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   if(debtEdit)return <RecordEditor title={debtEdit.id?'Edit debt plan':'Add debt plan'} value={debtEdit} setValue={setDebtEdit} onSave={value=>{saveList('debts',{...value,balance:Math.max(0,numberValue(value.balance)),minimumPayment:Math.max(0,numberValue(value.minimumPayment)),active:Boolean(value.active)});setDebtEdit(null)}} onCancel={()=>setDebtEdit(null)} fields={[{label:'Title',key:'title'},{label:'Balance',key:'balance',type:'number',min:'0'},{label:'Minimum payment',key:'minimumPayment',type:'number',min:'0'},{label:'Due date',key:'dueDate',type:'date'},{label:'Active',key:'active',type:'checkbox'},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   if(purchaseEdit)return <RecordEditor title={purchaseEdit.id?'Edit planned purchase':'Add planned purchase'} value={purchaseEdit} setValue={setPurchaseEdit} onSave={value=>{saveList('purchases',{...value,targetAmount:Math.max(0,numberValue(value.targetAmount)),savedAmount:Math.max(0,numberValue(value.savedAmount))});setPurchaseEdit(null)}} onCancel={()=>setPurchaseEdit(null)} fields={[{label:'Title',key:'title'},{label:'Target amount',key:'targetAmount',type:'number',min:'0'},{label:'Saved amount',key:'savedAmount',type:'number',min:'0'},{label:'Target date',key:'targetDate',type:'date'},{label:'Status',key:'status',type:'select',options:['Planning','Saving','Ready','Purchased']},{label:'Note',key:'note',type:'textarea',wide:true}]}/>;
+   return null;
+ };
+ return <><header><small>Money magic</small><h1>Money</h1><p className="muted">A gentle treasure quest, not a spreadsheet.</p></header><ViewTabs view={view} setView={setView}/>
+ {view==='today'&&<><Card className="money-hero"><small>AVAILABLE TODAY</small><strong>{money(root.availableToday)}</strong><p>Usable money for today.</p><label className="form-field"><span>Edit Available Today</span><input type="number" min="0" value={root.availableToday} onChange={e=>saveMoney({availableToday:Math.max(0,numberValue(e.target.value))})}/></label><div className="money-today-stats"><span>Earned today <b>{money(root.earnedToday)}</b></span>{target.hasCustomTarget&&<span>Today target <b>{money(target.target)}</b><small>{money(target.targetRemaining)} left</small></span>}</div></Card><WorkWindows root={root} saveMoney={saveMoney} setWindowEdit={setWindowEdit}/><Card className="quick-log-card"><h2>Quick log</h2><div className="quick-add-actions"><button type="button" className="primary" onClick={()=>{openTx('earned');setView('activity')}}>+ Log earnings</button><button type="button" className="secondary" onClick={()=>{openTx('spent');setView('activity')}}>+ Log spending</button></div><p className="muted">{target.hasCustomTarget?money(target.targetRemaining)+' left to today target · ':''}{!target.hasCustomTarget&&target.suggestedToday>0?money(target.suggestedToday)+' suggested today from your weekly mission.':''}</p></Card><Card className="money-mission"><h2>Weekly Mission</h2><strong>{money(mission.earned)} / {money(mission.goal)}</strong><div className="progress"><i style={{width:(mission.goal?Math.min(100,mission.earned/mission.goal*100):0)+'%'}}/></div><div className="money-mission-meta"><span>{money(mission.remaining)} left</span><span>{mission.daysRemaining} days · {money(mission.suggestedPerDay)}/day suggested</span></div><button type="button" className="secondary" onClick={()=>setView('mission')}>Open Mission</button></Card></>}
+ {view==='mission'&&<><Card className="money-mission money-hero"><small>WEEKLY MONEY MISSION</small><strong>{money(mission.earned)} / {money(mission.goal)}</strong><div className="progress"><i style={{width:(mission.goal?Math.min(100,mission.earned/mission.goal*100):0)+'%'}}/></div><p>{money(mission.remaining)} left · {mission.daysRemaining} days remaining</p><p className="pink-attention">{money(mission.suggestedPerDay)} suggested per remaining day</p><div className="creator-form-grid"><InputField label="Weekly Goal" type="number" min="0" value={root.weeklyGoal} onChange={value=>saveMoney({weeklyGoal:Math.max(0,numberValue(value))})}/><InputField label="Days Remaining" type="number" min="0" value={root.daysRemaining} onChange={value=>saveMoney({daysRemaining:Math.max(0,Math.floor(numberValue(value)))})}/><InputField label="Today Target (optional)" type="number" min="0" value={root.todayTarget??''} placeholder="Blank = suggested only" onChange={value=>saveMoney({todayTarget:value===''?null:Math.max(0,numberValue(value))})}/></div></Card><WorkWindows root={root} saveMoney={saveMoney} setWindowEdit={setWindowEdit}/><Card><h2>Logged gig profit</h2><strong className="planned-needs-total">{money(profit.profit)}</strong><p className="muted">Based only on transactions marked Gig-related.</p><small>Earned {money(profit.earned)} · Spent {money(profit.spent)}</small></Card></>}
+ {view==='plan'&&<><Card><div className="section-title-row"><h2>Money buckets</h2><small>Editable context</small></div><div className="bucket-grid">{['life','con','fun'].map(bucket=><label className="bucket" key={bucket}><span>{bucket[0].toUpperCase()+bucket.slice(1)}</span><input type="number" min="0" value={root.buckets?.[bucket]??0} onChange={e=>saveMoney({buckets:{...root.buckets,[bucket]:Math.max(0,numberValue(e.target.value))}})}/></label>)}</div></Card><PlannedNeeds data={data} setScreen={setScreen}/><PlanningList title="Bills + Subscriptions" items={root.obligations} empty="No bills or subscriptions added." onAdd={()=>setObligationEdit({id:null,title:'',type:'Bill',amount:'',dueDate:'',dueDay:'',frequency:'Monthly',autopay:false,active:true,note:''})} onEdit={setObligationEdit} onDelete={item=>deleteList('obligations',item)} renderItem={item=><><b>{item.title||'Untitled obligation'}</b><small>{item.type||'Bill'} · {money(item.amount)}{item.dueDate?' · due '+item.dueDate:''}{item.active===false?' · paused':''}</small></>}/><PlanningList title="Savings + Funds" items={root.savingsGoals} empty="No savings goals yet." onAdd={()=>setSavingEdit({id:null,title:'',type:'Savings',target:'',current:'',targetDate:'',active:true,note:''})} onEdit={setSavingEdit} onDelete={item=>deleteList('savingsGoals',item)} renderItem={item=>{const progress=getSavingsProgress(item);return <><b>{item.title||'Untitled fund'}</b><small>{item.type||'Savings'} · {money(progress.current)} / {money(progress.target)} ({Math.round(progress.percentage)}%)</small></>}}/><PlanningList title="Debt planning" items={root.debts} empty="No debt notes added." onAdd={()=>setDebtEdit({id:null,title:'',balance:'',minimumPayment:'',dueDate:'',active:true,note:''})} onEdit={setDebtEdit} onDelete={item=>deleteList('debts',item)} renderItem={item=><><b>{item.title||'Untitled debt'}</b><small>{money(item.balance)} balance{item.minimumPayment?' · '+money(item.minimumPayment)+' minimum':''}{item.active===false?' · paused':''}</small></>}/><PlanningList title="Large purchases" items={root.purchases} empty="No large purchases planned." onAdd={()=>setPurchaseEdit({id:null,title:'',targetAmount:'',savedAmount:'',targetDate:'',status:'Planning',note:''})} onEdit={setPurchaseEdit} onDelete={item=>deleteList('purchases',item)} renderItem={item=><><b>{item.title||'Untitled purchase'}</b><small>{item.status||'Planning'} · {money(item.savedAmount)} / {money(item.targetAmount)}{item.targetDate?' · '+item.targetDate:''}</small></>}/><PlanningList title="Legacy Upcoming Money" items={root.upcoming} empty="No manual upcoming money items." onAdd={()=>setUpcomingEdit({id:null,title:'',amount:'',due:'',type:'Goal',note:''})} onEdit={setUpcomingEdit} onDelete={item=>deleteList('upcoming',item)} renderItem={item=><><b>{item.title||'Untitled item'}</b><small>{money(item.amount)}{item.due?' · due '+item.due:''}{item.type?' · '+item.type:''}</small></>}/></>}
+ {view==='activity'&&<><Card><div className="section-title-row"><h2>Recent Activity</h2><div className="card-actions"><button type="button" className="primary tiny-action" onClick={()=>openTx('earned')}>+ Earned</button><button type="button" className="secondary tiny-action" onClick={()=>openTx('spent')}>+ Spent</button></div></div><TransactionList root={root} setTxEdit={setTxEdit} onDelete={deleteTransaction}/></Card><Card><h2>Good Work Windows</h2><p className="muted">Your work check-ins live in Today and Mission.</p><button type="button" className="secondary" onClick={()=>setView('today')}>Open Today</button></Card><Card><h2>Upcoming Money editor</h2><p className="muted">Legacy manual items stay separate from bills and planned needs.</p><button type="button" className="secondary" onClick={()=>setView('plan')}>Open Plan</button></Card></>}
+ {renderEditor()}</>
 }
