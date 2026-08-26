@@ -69,16 +69,20 @@ export function getPlannedNeeds(data={}){
 
 export function normalizeMoneyRoot(rawMoney={}){
  const raw=rawMoney&&typeof rawMoney==='object'?rawMoney:{};
+ const transactions=Array.isArray(raw.transactions)?raw.transactions:[];
+ // Early NyxieOS prototype data shipped with a fake $42 weekly-earned sample.
+ // Treat that exact untouched sample as zero so real missions start clean.
+ const hasDemoWeeklyEarnedSeed=transactions.length===0&&finiteNumber(raw.weeklyEarned)===42&&finiteNumber(raw.earnedToday)===0;
  return {
    ...raw,
    availableToday:finiteNumber(raw.availableToday),
    earnedToday:finiteNumber(raw.earnedToday),
    weeklyGoal:finiteNumber(raw.weeklyGoal),
-   weeklyEarned:finiteNumber(raw.weeklyEarned),
+   weeklyEarned:hasDemoWeeklyEarnedSeed?0:finiteNumber(raw.weeklyEarned),
    daysRemaining:Math.max(0,Math.floor(finiteNumber(raw.daysRemaining))),
    todayTarget:raw.todayTarget===null||raw.todayTarget===undefined||raw.todayTarget===''?null:Math.max(0,finiteNumber(raw.todayTarget)),
    buckets:{life:finiteNumber(raw.buckets?.life),con:finiteNumber(raw.buckets?.con),fun:finiteNumber(raw.buckets?.fun),...(raw.buckets||{})},
-   transactions:Array.isArray(raw.transactions)?raw.transactions:[],
+   transactions,
    workWindows:Array.isArray(raw.workWindows)?raw.workWindows:[],
    workWindowCheckins:raw.workWindowCheckins&&typeof raw.workWindowCheckins==='object'?raw.workWindowCheckins:{},
    upcoming:Array.isArray(raw.upcoming)?raw.upcoming:[],
