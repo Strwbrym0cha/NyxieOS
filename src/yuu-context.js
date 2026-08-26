@@ -1,3 +1,4 @@
+import {getApplicableRoutines,getRoutineTodaySummary,shiftRoutineDate} from './routine-derived.js';
 import {getApplicableWorkWindows,getLoggedGigProfit,getPlannedNeeds,getTodayMoneyTargetSummary,getWeeklyMissionSummary,normalizeMoneyRoot} from './money-derived.js';
 import {getDueSoonPieces,getNextCosplayPiece,getPackedCount,getPrimaryReference,getProjectProgress,getRemainingPieces,isReady,normalizeStatus} from './cosplay-derived.js';
 import {getWellnessDay,getWellnessHomeSummary,getWeeklyWellnessSummary} from './wellness-derived.js';
@@ -71,13 +72,9 @@ export function getPlannerContext(data={},date=localDate()){
  const creatorReminders=getCreatorReminderItems(creatorRoot,date);
  const creatorConventionSummary=getConventionCreatorSummary(creatorRoot,nearestConvention);
  const creatorCollaborators=creatorRoot.collaborators;
- const routines=data.routines||[];
- const routineSummaries=routines.map(routine=>{
-   const steps=routine.steps||[];
-   const completion=routine.completion?.[date]||{};
-   const done=steps.reduce((count,step,index)=>count+(completion[index]||completion[step?.id]||false?1:0),0);
-   return {routine,done,total:steps.length,skipped:Boolean(routine.skipped?.[date]),remaining:Math.max(0,steps.length-done)};
- });
+ const routines=Array.isArray(data.routines)?data.routines:[];
+ const routineSummaries=getApplicableRoutines(routines,date).map(routine=>getRoutineTodaySummary(routine,date));
+ const tomorrowRoutineSummaries=getApplicableRoutines(routines,shiftRoutineDate(date,1)).map(routine=>getRoutineTodaySummary(routine,shiftRoutineDate(date,1)));
  const wellness=getWellnessDay(data.wellness,date);
  const wellnessSummary=getWellnessHomeSummary(data.wellness,date);
  const weeklyWellness=getWeeklyWellnessSummary(data.wellness,date);
@@ -88,6 +85,6 @@ export function getPlannerContext(data={},date=localDate()){
    nearestConvention,upcomingConventions,conventionPrep,conventionSuggestions,conventionSchedule,conventionPhotoshoots,conventionEssentials,conventionContent,
    nextTrip,nextFlight,stays,transport,tripPacking,
    creatorItems,nextShoot,nextUpload,overdueContent,stageCounts,creatorRoot,creatorFocus,creatorReminders,creatorConventionSummary,creatorCollaborators,creatorDeadlines,
-   routines,routineSummaries,wellness,wellnessSummary,weeklyWellness
+   routines,routineSummaries,tomorrowRoutineSummaries,wellness,wellnessSummary,weeklyWellness
  };
 }
