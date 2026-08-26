@@ -20,7 +20,8 @@ const money=value=>{
  return '$'+(Number.isFinite(number)?number:0).toFixed(2);
 };
 const numberValue=value=>{const number=Number(value);return Number.isFinite(number)?number:0};
-const idFor=()=>Date.now()+Math.floor(Math.random()*1000);\nconst hasId=value=>value?.id!==null&&value?.id!==undefined&&value?.id!=='';
+const idFor=()=>Date.now()+Math.floor(Math.random()*1000);
+const hasId=value=>value?.id!==null&&value?.id!==undefined&&value?.id!=='';
 const today=()=>localDate();
 const timeNow=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 const validBucket=value=>['life','con','fun'].includes(String(value||'').toLowerCase())?String(value).toLowerCase():'';
