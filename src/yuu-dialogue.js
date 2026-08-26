@@ -23,11 +23,17 @@ export function generateReply(intent,data,settings={},options={}){
  const tone=toneOf(settings);
  const seed=Number(options.seed||0);
  const more=Boolean(options.more);
+ const activeMode=c.mode?.effective||'normal';
  switch(intent){
   case 'greeting':
-   return {text:pick(['Yare yare. I am awake. What shall we check?','Hello, Nyxie. Pick a planner problem and I shall judge it gently.','Hey. Tasks, money, cosplay, or something else?'],seed),state:'normal'};
+   if(activeMode==='low-energy')return {text:'Yare yare. Today can be smaller. Water, food, rest, or one tiny task?',state:'sleepy'};
+   return {text:pick(['Yare yare. I am awake. What shall we check?','Hello, Nyxie. Pick a planner problem and I shall judge it gently.','Hey, tasks, money, cosplay, or something else?'],seed),state:'normal'};
   case 'today_tasks':
-   return {text:renderToday(c,tone,more,seed),state:c.incompleteToday.length>3?'nagging':'normal'};
+   return activeMode==='low-energy'?{text:'Yare yare. Today can be smaller. '+(c.incompleteToday.length?c.incompleteToday[0].title+' is one useful next step.':'Your list is clear today.'),state:'sleepy'}:{text:renderToday(c,tone,more,seed),state:c.incompleteToday.length>3?'nagging':'normal'};
+  case 'mode_status':{
+   const mode=c.mode||{};
+   return {text:'Current focus: '+(mode.label||'Normal Day')+'.'+(mode.suggested&&mode.suggested!==mode.effective?' Auto would suggest '+mode.suggested+'.':'')+' I will keep the planner facts the same.',state:mode.effective==='low-energy'?'sleepy':'normal'};
+  }
   case 'reminder_status':{
    const buckets=c.reminderBuckets||{today:[],upcoming:[],overdue:[],importantToday:[]};
    const topic=options.topic||'today';
@@ -247,7 +253,7 @@ export function generateReply(intent,data,settings={},options={}){
    return {text:(tone==='Gentle'?'Your work options today: ':tone==='Bratty'?'Yare yare. Your shifts today: ':'Today’s work windows: ')+windows.map(w=>(w.start||'flexible')+'–'+(w.end||'flexible')).join(' · ')+'.',state:'money'};
   }
   case 'help':
-   return {text:'I can help with tasks, money, cosplay, conventions, travel, content, routines, work windows, wellness, and reminders. Ask me what is next.',state:'normal'};
+   return {text:'I can help with tasks, money, cosplay, conventions, travel, content, routines, work windows, wellness, reminders, and the current mode. Ask me what is next.',state:'normal'};
   case 'thanks':
    return {text:pick(['You are welcome. Try not to break the planner.','Anytime, Nyxie.','Yare yare. I had it handled.'],seed),state:'proud'};
   case 'relationship_boundary':
