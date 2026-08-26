@@ -47,7 +47,7 @@ export function generateReply(intent,data,settings={},options={}){
     return {text:planned.total?'You have '+money(planned.total)+' in planned needs across cosplay, conventions, travel, and manual upcoming items.':'Nothing big is planned yet. Your future wallet is suspiciously peaceful.',state:'money'};
    }
    if(options.topic==='dailyTarget'){
-    const target=m.targetSummary||getTodayMoneyTargetSummary(m,date);
+    const target=m.targetSummary||getTodayMoneyTargetSummary(m,c.date);
     return {text:target.hasCustomTarget?'Today target is '+money(target.target)+', with '+money(target.targetRemaining)+' left after '+money(target.earnedToday)+' earned today.':'No custom target today. Your suggested pace is '+money(target.suggestedToday)+' from the weekly mission.',state:'money'};
    }
    if(options.topic==='work'){
