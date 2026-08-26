@@ -59,6 +59,12 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/\b(how ready|ready is my cosplay|readiness)\b/.test(text))return {intent:'cosplay_status',topic:'readiness',text};
  if(/\b(cosplay|costume|wig|jacket|boots|piece|pieces|ready for)\b/.test(text))return {intent:'cosplay_status',topic:'attention',text};
  if(/\b(money|cash|wallet|weekly goal|weekly mission|earned|spendable|available today|how much do i have)\b/.test(text))return {intent:'money_status',text};
+ if(/\b(what routines do i have today|routines? today|what routines apply)\b/.test(text))return {intent:'routine_status',topic:'today',text};
+ if(/\b(what routine is left|what routines? remain|routine.*left)\b/.test(text))return {intent:'routine_status',topic:'remaining',text};
+ if(/\b(how far am i in my routine|routine progress|how much.*routine.*done)\b/.test(text))return {intent:'routine_status',topic:'progress',text};
+ if(/\b(did i skip my routine|did i skip a routine|skipped routine)\b/.test(text))return {intent:'routine_status',topic:'skipped',text};
+ if(/\b(what is the tiny version|tiny version|tiny routine)\b/.test(text))return {intent:'routine_status',topic:'tiny',text};
+ if(/\b(can i do this tomorrow|try tomorrow|routine tomorrow)\b/.test(text))return {intent:'routine_status',topic:'tomorrow',text};
  if(/\b(routine|routines|ritual|steps)\b/.test(text))return {intent:'routine_status',text};
  if(/\b(today|to do|todo|task|tasks|my list|schedule|what do i need|what's on)\b/.test(text))return {intent:'today_tasks',text};
  if(/\b(coming up|upcoming|this week|next)\b/.test(text))return {intent:'upcoming',text};
