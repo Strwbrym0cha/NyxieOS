@@ -21,6 +21,12 @@ export function parseIntent(input,{lastIntent=null}={}){
  if(/^(?:help|what can you do|commands|options)\b/.test(text))return {intent:'help',text};
  if(/\b(planned needs|planned expenses|planned upcoming|how much .*planned)\b/.test(text))return {intent:'money_status',topic:'planned',text};
  if(/\b(how much|cost|budget|need|planned)\b.*\bcosplay\b/.test(text))return {intent:'money_status',topic:'cosplay',text};
+ if(/\b(how am i doing|how am i today|wellness today)\b/.test(text))return {intent:'wellness_status',topic:'today',text};
+ if(/\b(how much water|water have i had|water today)\b/.test(text))return {intent:'wellness_status',topic:'water',text};
+ if(/\b(did i eat|have i eaten|meals today|what did i eat)\b/.test(text))return {intent:'wellness_status',topic:'meals',text};
+ if(/\b(how did i sleep|sleep last night|how was my sleep)\b/.test(text))return {intent:'wellness_status',topic:'sleep',text};
+ if(/\b(did i work out|did i workout|movement today|gym today|exercise today)\b/.test(text))return {intent:'wellness_status',topic:'movement',text};
+ if(/\b(how was my week|wellness this week|week wellness)\b/.test(text))return {intent:'wellness_status',topic:'week',text};
  if(/\b(low energy|tired|wellness|water|meals?|sleep|rest day|movement|feeling exhausted)\b/.test(text))return {intent:'wellness_status',text};
  if(/\b(work window|work windows|shift|shifts|when should i work|when can i work|work today|work tonight)\b/.test(text))return {intent:'work_status',text};
  if(/\b(content|creator|film|filming|video|upload|shoot|posted|editing)\b/.test(text))return {intent:'creator_status',text};
