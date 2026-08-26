@@ -1,4 +1,4 @@
-const DATE_RE=/^\\d{4}-\\d{2}-\\d{2}$/;
+const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS=86400000;
 const RESET_DEFAULTS=['Unpack','Laundry','Charge devices','Put documents away','Review spending','Clear travel bag','Back up photos/content','Note anything to replace'];
 
