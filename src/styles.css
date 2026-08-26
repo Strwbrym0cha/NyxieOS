@@ -260,3 +260,21 @@
  .travel-child-row .card-actions{width:100%;justify-content:flex-start}
  .travel-summary-grid{grid-template-columns:1fr}
 }
+
+/* Reminders / Attention Center */
+.reminder-tabs{display:flex;gap:8px;overflow-x:auto;padding:3px 0 14px;scrollbar-width:none}
+.reminder-tabs::-webkit-scrollbar{display:none}
+.reminder-tabs button{flex:1 0 92px;min-height:44px}
+.reminder-card{display:grid;gap:10px}
+.reminder-card.reminder-important{border:2px solid #f5b4d7}
+.reminder-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;min-width:0}
+.reminder-head h2{margin:0;color:var(--pink-deep);overflow-wrap:anywhere}
+.reminder-date{color:var(--pink-deep);font-weight:800;white-space:nowrap}
+.reminder-section-title{color:var(--pink-deep);margin:18px 0 8px}
+.reminder-actions{display:flex;gap:8px;flex-wrap:wrap}
+.reminder-editor{border:2px solid #f5b4d7}
+@media(max-width:380px){
+ .reminder-head{display:block}
+ .reminder-date{display:block;margin-top:6px}
+ .reminder-actions button{flex:1 1 120px}
+}
