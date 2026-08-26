@@ -133,10 +133,20 @@ export function generateReply(intent,data,settings={},options={}){
    return {text:tone==='Gentle'?'Today’s rituals: '+summary+'.':tone==='Bratty'?'Yare yare. Ritual report: '+summary+'.':'Routines today: '+summary+'.',state:'normal'};
   }
   case 'wellness_status':{
-   const w=c.wellness;
-   if(!w)return {text:'No wellness check-in is saved for today. A tiny check-in is enough.',state:'sleepy'};
-   const low=w.energy==='Low';
-   return {text:low?'Yare yare. Keep it small today. Energy is low; water '+(w.water||0)+', meals '+(w.meals||0)+', sleep '+(w.sleep||0)+' hours.':'Today’s check-in: energy '+(w.energy||'not set')+', water '+(w.water||0)+', meals '+(w.meals||0)+', sleep '+(w.sleep||0)+' hours.',state:low?'sleepy':'normal'};
+   const w=c.wellness||{};
+   const summary=c.wellnessSummary||{};
+   const topic=options.topic||'today';
+   if(topic==='water')return {text:'You’ve logged '+(summary.waterOz||0)+' oz today. Goal: '+(summary.goalOz||64)+' oz.',state:'normal'};
+   if(topic==='meals')return {text:summary.meals?'You’ve logged '+plural(summary.meals,'meal')+' today.':'No meals are logged today yet. A simple bite counts.',state:'normal'};
+   if(topic==='sleep')return {text:Number(w.sleep)>0?'You logged '+w.sleep+' hours of sleep.':'No sleep hours are logged yet.',state:'sleepy'};
+   if(topic==='movement')return {text:'Movement: '+(w.movement?'done':'not marked')+'. Gym/workout: '+(w.gym?'done':'not marked')+'.'+(Number(w.steps)>0?' Steps: '+w.steps+'.':'') ,state:'normal'};
+   if(topic==='week'){
+    const week=c.weeklyWellness||{};
+    return {text:'This week: '+(week.waterTotalOz||0)+' oz logged, '+plural(week.meals||0,'meal')+', movement on '+plural(week.movementDays||0,'day')+', and gym on '+plural(week.gymDays||0,'day')+'.'+(week.averageSleep==null?'':' Average sleep: '+week.averageSleep+' hours.'),state:'sleepy'};
+   }
+   const low=String(w.energy||'').toLowerCase()==='low';
+   const base='Energy '+(w.energy||'not set')+', '+(summary.waterOz||0)+' oz water, '+plural(summary.meals||0,'meal')+', '+(Number(w.sleep)||0)+' hours sleep.';
+   return {text:low?'Yare yare. Today can be smaller. '+base+' Pick water, food, or rest.':'Today’s check-in: '+base,state:low?'sleepy':'normal'};
   }
   case 'work_status':{
    const windows=c.money.workWindows;
