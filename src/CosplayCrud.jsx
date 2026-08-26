@@ -36,8 +36,8 @@ export default function CosplayCrud({data,setData}){
    if(!window.confirm('Delete this cosplay project?'))return;
    const next=projects.filter(item=>String(item.id)!==String(target.id));
    const cleaned={...data,cosplay:{...cosplay,projects:next,activeId:next[0]?.id??null,name:next[0]?.name,progress:next[0]?getProjectProgress(next[0]):0,pieces:next[0]?.pieces||[]}};
-   cleaned.creator={...data.creator,items:(data.creator?.items||[]).map(item=>item.cosplayId===target.id?{...item,cosplayId:null}:item)};
-   cleaned.conventions={...data.conventions,items:(data.conventions?.items||[]).map(item=>({...item,linkedCosplayIds:(item.linkedCosplayIds||[]).filter(id=>id!==target.id),cosplayIds:(item.cosplayIds||[]).filter(id=>id!==target.id)}))};
+   cleaned.creator={...data.creator,items:(data.creator?.items||[]).map(item=>String(item.cosplayId)===String(target.id)?{...item,cosplayId:null}:item)};
+   cleaned.conventions={...data.conventions,items:(data.conventions?.items||[]).map(item=>({...item,linkedCosplayIds:(item.linkedCosplayIds||[]).filter(id=>String(id)!==String(target.id)),cosplayIds:(item.cosplayIds||[]).filter(id=>String(id)!==String(target.id))}))};
    setData(cleaned);setSelected(null);setProjectEdit(null);
  };
  const submitProject=event=>{
